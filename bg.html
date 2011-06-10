@@ -2,30 +2,28 @@
 <html>
 <head>
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/prototype/1.7.0.0/prototype.js"></script>
-<script type="text/javascript" src="libraries/json2.js"></script>
 <script type="text/javascript">
 <!--
+
 var Collate = {};
--->
-</script>
-<script type="text/javascript" src="account.js"></script>
-<script type="text/javascript" src="account/rpc.js"></script>
-<script type="text/javascript" src="account/mtgox.js"></script>
-<script type="text/javascript">
-<!--
+Collate.CurrentTab = null;
 
-var acc = new Collate.Account.RPC("localhost", 9001, "jrhodes", "pass");
-acc.connect();
-
-function check()
+// Register our onClicked event handler.
+chrome.browserAction.onClicked.addListener(function(tab)
 {
-    if (acc.getBalance() == null)
-        window.setTimeout(check, 100);
-    else
-        alert(acc.getBalance());
-}
+    // Check to see if the tab already exists; if it does, switch to it.
+    if (Collate.CurrentTab != null)
+    {
+        chrome.tabs.update(Collate.CurrentTab.id, {selected: true, pinned: true});
+        return;
+    }
 
-window.setTimeout(check, 100);
+    // Create a new tab page that opens the front-end for Collate.
+    chrome.tabs.create({url: "frontend.html", selected: true, pinned: true}, function(tab)
+    {
+        Collate.CurrentTab = tab;
+    });
+});
 
 -->
 </script>
