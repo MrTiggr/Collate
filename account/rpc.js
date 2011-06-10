@@ -4,8 +4,8 @@
  * License:         MIT License
  *
  * Description:
- *  Defines the base class for a BitCoin account, whether it be connected
- *  via RPC or uses a custom API to another website.
+ *  Defines the class for connecting to a pure BitCoin server over
+ *  the JSON-RPC service it provides.
  *
  */
 
