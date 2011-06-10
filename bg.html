@@ -1,0 +1,34 @@
+<!DOCTYPE>
+<html>
+<head>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/prototype/1.7.0.0/prototype.js"></script>
+<script type="text/javascript" src="libraries/json2.js"></script>
+<script type="text/javascript">
+<!--
+var Collate = {};
+-->
+</script>
+<script type="text/javascript" src="account.js"></script>
+<script type="text/javascript" src="account/rpc.js"></script>
+<script type="text/javascript" src="account/mtgox.js"></script>
+<script type="text/javascript">
+<!--
+
+var acc = new Collate.Account.RPC("localhost", 9001, "jrhodes", "pass");
+acc.connect();
+
+function check()
+{
+    if (acc.getBalance() == null)
+        window.setTimeout(check, 100);
+    else
+        alert(acc.getBalance());
+}
+
+window.setTimeout(check, 100);
+
+-->
+</script>
+</head>
+<body></body>
+</html>
