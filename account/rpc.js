@@ -100,6 +100,28 @@ Collate.Account.RPC = Class.create(Collate.Account, {
     },
     
     // <summary>
+    // Requests a list of subitems to show in the sidebar, or null
+    // if the top-level item will be used.  In the later case, null
+    // will be passed to getUI instead of one of the strings in the array.
+    // </summary>
+    getMenu: function()
+    {
+        // Return menu items.
+        return ["Transactions", "Mining (Generation)"];
+    },
+    
+    // <summary>
+    // Requests the UKI UI to show in the main area.  You should probably
+    // create this the first time it is requested, and cache it for all
+    // times after that.
+    // </summary>
+    // <param name="page">One of the menu items, or null.</param>
+    getUI: function(page)
+    {
+        return null;
+    },
+    
+    // <summary>
     // Returns the current balance of the account.
     // </summary>
     getBalance: function($super)

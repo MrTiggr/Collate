@@ -42,6 +42,29 @@ Collate.Account = Class.create({
     },
     
     // <summary>
+    // Requests a list of subitems to show in the sidebar, or null
+    // if the top-level item will be used.  In the later case, null
+    // will be passed to getUI instead of one of the strings in the array.
+    // </summary>
+    getMenu: function()
+    {
+        // There's no menu items as this isn't a proper class.
+        return null;
+    },
+    
+    // <summary>
+    // Requests the UKI UI to show in the main area.  You should probably
+    // create this the first time it is requested, and cache it for all
+    // times after that.
+    // </summary>
+    // <param name="page">One of the menu items, or null.</param>
+    getUI: function(page)
+    {
+        // There's no UI as this isn't a proper class.
+        return null;
+    },
+    
+    // <summary>
     // Returns the current balance of the account.
     // </summary>
     getBalance: function()

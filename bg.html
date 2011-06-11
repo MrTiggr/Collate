@@ -25,6 +25,13 @@ chrome.browserAction.onClicked.addListener(function(tab)
     });
 });
 
+// Register our onRemoved event handler.
+chrome.tabs.onRemoved.addListener(function(tabId, removeInfo)
+{
+    if (tabId == Collate.CurrentTab.id)
+        Collate.CurrentTab = null;
+});
+
 -->
 </script>
 </head>

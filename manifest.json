@@ -2,9 +2,9 @@
   "name": "Collate",
   "version": "0.1",
   "description": "A unified BitCoin management system.",
-  "icons": { "128": "icon.png" },
+  "icons": { "128": "icon128.png" },
   "background_page": "bg.html",
-  "permissions": ["http://*/"],
+  "permissions": ["tabs", "http://*/"],
   "browser_action": {
     "default_title": "Collate (35 BTC)",
     "default_icon": "icon.png"
