@@ -58,7 +58,8 @@ Collate.Account = Class.create({
     // times after that.
     // </summary>
     // <param name="page">One of the menu items, or null.</param>
-    getUI: function(page)
+    // <param name="attach">Call this function with the generated UKI before modifying elements.</param>
+    getUI: function(page, attach)
     {
         // There's no UI as this isn't a proper class.
         return null;

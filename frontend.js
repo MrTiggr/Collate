@@ -9,12 +9,19 @@ Collate.UI = {
 Collate.User = {
         Accounts: {}
     };
+Collate.Globals = {};
 
 //
 // Setup some initial accounts.
 //
 Collate.User.Accounts["Local Bitcoin Server"] = new Collate.Account.RPC("localhost", 9001, "jrhodes", "pass");
 Collate.User.Accounts["Local Bitcoin Server"].connect();
+
+//
+// Setup the global instances.
+//
+Collate.Globals["Dashboard"] = new Collate.Global.Dashboard();
+Collate.Globals["NewAccount"] = new Collate.Global.NewAccount();
 
 //
 // Define the structures for the sidebar.
@@ -43,7 +50,6 @@ for (var i in Collate.User.Accounts)
     }
 }
 
-
 //
 // Setup how the page looks.
 //
@@ -56,12 +62,12 @@ uki(
         { view: 'Box', rect: '0 0 1000 44', anchors: 'top left right width', background: 'theme(panel)', childViews: [
         
             // Toolbar buttons
-            { view: 'Button', rect: '10 10 170 24', anchors: 'left top', id: 'Tools-GetAccountBalance', text: 'Get Account Balance'},
+            { view: 'Button', rect: '10 10 121 24', anchors: 'left top', id: 'Tools-NewAccount', text: 'New Account'},
             
         ] },
         
         // Horizontally split area
-        { view: 'HSplitPane', rect: '0 45 1000 9956', anchors: 'top left right width bottom height',
+        { view: 'HSplitPane', rect: '0 45 1000 956', anchors: 'top left right width bottom height',
           handleWidth: 1, handlePosition: 229, leftMin: 150, rightMin: 400,
           leftPane: { background: "#D0D7E2", childViews: [
             
@@ -75,6 +81,7 @@ uki(
           rightChildViews: [
             
             // List of transactions for account + other info
+            { view: 'Box', rect: '0 0 770 956', anchors: 'top left right width bottom height', id: 'MainArea' }
             
           ]
         },
@@ -116,29 +123,65 @@ uki('#TreeView-IndividualWallets').bind('mousedown', function()
 });
 uki('#TreeView-AllAccounts').selectedIndex(0);
 
-//'position: absolute; z-index: 100; font-size: 11px; -webkit-user-select: none; cursor: default; color: rgb(113, 129, 147); left: 0px; top: 0px; right: 0px; height: 20px; font-weight: bold; text-shadow: rgba(255, 255, 255, 0.796875) 0px 1px 0px;'
+//
+// Define our function for handling UI loading.
+//
+function ClearUI()
+{
+    var area = uki('#MainArea');
+    area.dom().innerHTML = "";
+}
+function LoadUI(func)
+{
+    var area = uki('#MainArea');
+    if (func == null)
+    {
+        area.dom().innerHTML = "<h2>This page is invalid.</h2>";
+        return;
+    }
+    var wasAttached = false;
+    var attach = function(uu)
+    {
+        uu.attachTo(area.dom(), '1000 1000');
+        wasAttached = true;
+    };
+    var result = func(attach);
+    if (!wasAttached)
+        area.dom().innerHTML = "<h2>This page is invalid.</h2>";
+}
+
+//
+// Attach event handlers for sidebar items.
+//
+uki('#TreeView-AllAccounts').bind('mouseup', function()
+{
+    var index = uki('#TreeView-AllAccounts').selectedRow().data;
+    ClearUI();
+    switch (index)
+    {
+        case "Dashboard":
+            // Notice that we send the function across, not the result
+            // of it.
+            LoadUI(Collate.Globals[index].getUI, null);
+            break;
+        default:
+            LoadUI(null);
+            break;
+    }
+});
 
 //
 // Attach event handlers.
 //
-uki('#Tools-GetAccountBalance').bind('click', function() {
-    
-    // TODO: These event handlers should strictly just call
-    //       functions in prototype-based classes.
-    var acc = new Collate.Account.RPC("localhost", 9001, "jrhodes", "pass");
-    acc.connect();
+uki('#Tools-NewAccount').bind('click', function() {
 
-    var check = function()
-    {
-        if (acc.getBalance() == null)
-            window.setTimeout(check, 100);
-        else
-        {
-            alert(acc.getBalance());
-            acc.disconnect();
-        }
-    }
-
-    window.setTimeout(check, 100);
+    ClearUI();
+    LoadUI(Collate.Globals["NewAccount"].getUI, null);
     
 });
+
+//
+// Now load the dashboard.
+//
+ClearUI();
+LoadUI(Collate.Globals["Dashboard"].getUI, null);

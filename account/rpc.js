@@ -116,7 +116,8 @@ Collate.Account.RPC = Class.create(Collate.Account, {
     // times after that.
     // </summary>
     // <param name="page">One of the menu items, or null.</param>
-    getUI: function(page)
+    // <param name="attach">Call this function with the generated UKI before modifying elements.</param>
+    getUI: function(page, attach)
     {
         return null;
     },
@@ -131,3 +132,13 @@ Collate.Account.RPC = Class.create(Collate.Account, {
     }
     
 });
+
+// <summary>
+// The account type name (to be shown in the New Account wizard).
+// </summary>
+Collate.Account.RPC.Name = "Local Server (RPC)";
+
+// <summary>
+// The account type description (to be shown in the New Account wizard).
+// </summary>
+Collate.Account.RPC.Description = "<i>Connects to a BitCoin server running on your local machine via RPC.</i><br/><br/>If you are running the BitCoin client on your machine and want to be able to send BitCoins and view transactions from within your browser, this is the account type to select.  Please ensure that you do not have two Local Server Accounts connecting to the same BitCoin client, or the available BitCoin balance will be incorrect.";
