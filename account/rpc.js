@@ -15,13 +15,13 @@ Collate.Account.RPC = Class.create(Collate.Account, {
     // Initalizes an RPC-based account, such as a connection to a local or remote
     // BitCoin server.
     // </summary>
-    initialize: function(rpcHost, rpcPort, rpcUser, rpcPassword)
+    initialize: function(parameters)
     {
         this.settings = {
-            host: rpcHost,
-            port: rpcPort,
-            username: rpcUser,
-            password: rpcPassword
+            host: parameters.host || "localhost",
+            port: parameters.port || "8332",
+            username: parameters.username || "user",
+            password: parameters.password || "pass"
             };
         this.connected = false;
         this.state = null;
@@ -142,3 +142,13 @@ Collate.Account.RPC.Name = "Local Server (RPC)";
 // The account type description (to be shown in the New Account wizard).
 // </summary>
 Collate.Account.RPC.Description = "<i>Connects to a BitCoin server running on your local machine via RPC.</i><br/><br/>If you are running the BitCoin client on your machine and want to be able to send BitCoins and view transactions from within your browser, this is the account type to select.  Please ensure that you do not have two Local Server Accounts connecting to the same BitCoin client, or the available BitCoin balance will be incorrect.";
+
+// <summary>
+// The account parameter list.
+// </summary>
+Collate.Account.RPC.Parameters = [
+    { type: 'Text', name: 'host', text: 'Hostname', default: 'localhost' },
+    { type: 'Text', name: 'port', text: 'Port', default: '8332' },
+    { type: 'Text', name: 'username', text: 'Username', default: 'user' },
+    { type: 'Text', name: 'password', text: 'Password', default: 'pass' },
+];

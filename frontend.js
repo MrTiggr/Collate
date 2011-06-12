@@ -6,16 +6,17 @@ Collate.UI = {
             Global: {}
         }
     };
+Collate.Globals = {};
 Collate.User = {
         Accounts: {}
     };
-Collate.Globals = {};
 
 //
-// Setup some initial accounts.
+// Initalize all of the already defined accounts.
 //
-Collate.User.Accounts["Local Bitcoin Server"] = new Collate.Account.RPC("localhost", 9001, "jrhodes", "pass");
-Collate.User.Accounts["Local Bitcoin Server"].connect();
+var s = Collate.Storage.getRawItem("global-accounts");
+for (var i = 0; i < s.length; i += 1)
+    Collate.User.Accounts[s[i].name] = new Collate.Account[s[i]["type"]](s[i].parameters);
 
 //
 // Setup the global instances.
@@ -32,23 +33,37 @@ Collate.UI.Data.Global.AllAccounts = [
     { data: 'Transactions received' },
     { data: 'Blocks generated' }
 ];
-Collate.UI.Data.Global.IndividualWallets = [
-];
-for (var i in Collate.User.Accounts)
+
+function GenerateAccountSidebar()
 {
-    var items = Collate.User.Accounts[i].getMenu();
-    var d = [];    
-    for (var a in items)
+    Collate.UI.Data.Global.IndividualWallets = [];
+    for (var i in Collate.User.Accounts)
     {
-        if (typeof(items[a]) == "string")
-            d[d.length] = { data: items[a] };
-    }
-    Collate.UI.Data.Global.IndividualWallets[Collate.UI.Data.Global.IndividualWallets.length] = {
-        data: i,
-        children: d,
-        __opened: true
+        var items = Collate.User.Accounts[i].getMenu();
+        var d = [];    
+        for (var a in items)
+        {
+            var e = items[a];
+            if (typeof(e) == "string")
+                d[d.length] = { data: { toString: function() { return this.value; }, value: e, page: e, account: Collate.User.Accounts[i] } };
+        }
+        Collate.UI.Data.Global.IndividualWallets[Collate.UI.Data.Global.IndividualWallets.length] = {
+            data: { toString: function() { return this.value; }, value: i, page: null, account: Collate.User.Accounts[i] },
+            children: d,
+            __opened: true
+        }
     }
 }
+
+function ReassignAccountSidebar()
+{
+    uki("#TreeView-IndividualWallets").data(Collate.UI.Data.Global.IndividualWallets);
+}
+
+//
+// Generate the account sidebar.
+//
+GenerateAccountSidebar();
 
 //
 // Setup how the page looks.
@@ -131,10 +146,10 @@ function ClearUI()
     var area = uki('#MainArea');
     area.dom().innerHTML = "";
 }
-function LoadUI(func)
+function LoadUI(obj)
 {
     var area = uki('#MainArea');
-    if (func == null)
+    if (obj == null)
     {
         area.dom().innerHTML = "<h2>This page is invalid.</h2>";
         return;
@@ -145,7 +160,7 @@ function LoadUI(func)
         uu.attachTo(area.dom(), '1000 1000');
         wasAttached = true;
     };
-    var result = func(attach);
+    var result = obj.getUI(attach);
     if (!wasAttached)
         area.dom().innerHTML = "<h2>This page is invalid.</h2>";
 }
@@ -160,28 +175,32 @@ uki('#TreeView-AllAccounts').bind('mouseup', function()
     switch (index)
     {
         case "Dashboard":
-            // Notice that we send the function across, not the result
-            // of it.
-            LoadUI(Collate.Globals[index].getUI, null);
+            // Notice that we send the object across, not the result
+            // of getUI.
+            LoadUI(Collate.Globals[index], null);
             break;
         default:
             LoadUI(null);
             break;
     }
 });
+uki('#TreeView-IndividualWallets').bind('mouseup', function()
+{
+    var data = uki('#TreeView-IndividualWallets').selectedRow().data;
+    ClearUI();
+    LoadUI(data.account, data.page);
+});
 
 //
 // Attach event handlers.
 //
 uki('#Tools-NewAccount').bind('click', function() {
-
     ClearUI();
-    LoadUI(Collate.Globals["NewAccount"].getUI, null);
-    
+    LoadUI(Collate.Globals["NewAccount"], null);
 });
 
 //
 // Now load the dashboard.
 //
 ClearUI();
-LoadUI(Collate.Globals["Dashboard"].getUI, null);
+LoadUI(Collate.Globals["Dashboard"], null);
