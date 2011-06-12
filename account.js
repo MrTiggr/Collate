@@ -14,7 +14,9 @@ Collate.Account = Class.create({
     // <summary>
     // Initalizes the base class (this doesn't do anything).
     // </summary>
-    initialize: function()
+    // <param name="name">The name of this account as it appears in Collate.</param>
+    // <param name="parameters">The custom settings applicable to this account.</param>
+    initialize: function(name, parameters)
     {
         // Nothing to do.
     },

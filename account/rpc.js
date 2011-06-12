@@ -9,14 +9,20 @@
  *
  */
 
+const RPC_STATE_GETINFO = 0;
+const RPC_STATE_LISTTRANSACTIONS = 1;
+
 Collate.Account.RPC = Class.create(Collate.Account, {
 
     // <summary>
     // Initalizes an RPC-based account, such as a connection to a local or remote
     // BitCoin server.
     // </summary>
-    initialize: function(parameters)
+    // <param name="name">The name of this account as it appears in Collate.</param>
+    // <param name="parameters">The custom settings applicable to this account.</param>
+    initialize: function(name, parameters)
     {
+        this.name = name;
         this.settings = {
             host: parameters.host || "localhost",
             port: parameters.port || "8332",
@@ -25,6 +31,7 @@ Collate.Account.RPC = Class.create(Collate.Account, {
             };
         this.connected = false;
         this.state = null;
+        this.cachedInfo = null;
         this.cachedBalance = null;
         this.cachedTransactions = null;
     },
@@ -41,12 +48,19 @@ Collate.Account.RPC = Class.create(Collate.Account, {
         // Construct the URL.
         this.state = {
             url:"http://" + this.settings.host + ":" + this.settings.port + "/",
-            request: {
-                jsonrpc: 1.0,
-                id: 1,
-                method: "listtransactions",
-                params: []
-                }
+            request: [ 
+                {  // RPC_STATE_GETINFO
+                    jsonrpc: 1.0,
+                    id: 1,
+                    method: "getinfo",
+                    params: []
+                },
+                { // RPC_STATE_LISTTRANSACTIONS
+                    jsonrpc: 1.0,
+                    id: 1,
+                    method: "listtransactions",
+                    params: []
+                } ]
             };
         
         // We are now connected (the onRequest won't fire correctly unless
@@ -56,14 +70,14 @@ Collate.Account.RPC = Class.create(Collate.Account, {
         // Call the callback with the xhr set to null; this will indicate that
         // we're just going to start a request rather than handling an existing
         // one.
-        this.onRequest(null);
+        this.onRequest(null, RPC_STATE_LISTTRANSACTIONS);
         return true;
     },
     
     // <summary>
     // Callback function for handling the XMLHttpRequest events.
     // </summary>
-    onRequest: function($super, xhr)
+    onRequest: function($super, xhr, state)
     {
         // See if we have disconnected and don't need to do anything.
         if (!this.connected)
@@ -72,14 +86,30 @@ Collate.Account.RPC = Class.create(Collate.Account, {
         // Handle the XMLHttpRequest if there is one.
         if (xhr != null)
         {
-            this.cachedTransactions = JSON.parse(xhr.responseText)["result"].reverse();
-            this.cachedBalance = 0;
-            for (var i = 0; i < this.cachedTransactions.length; i += 1)
-                this.cachedBalance += this.cachedTransactions[i]["amount"];
-            
-            // Generate list of transactions.
-            this.generateTransactionList();
+            switch (state)
+            {
+                case RPC_STATE_LISTTRANSACTIONS:
+                    this.cachedTransactions = JSON.parse(xhr.responseText)["result"].reverse();
+                    this.cachedBalance = 0;
+                    for (var i = 0; i < this.cachedTransactions.length; i += 1)
+                        this.cachedBalance += this.cachedTransactions[i]["amount"];
+                    
+                    // Generate list of transactions.
+                    this.generateTransactionList();
+                    break;
+                case RPC_STATE_GETINFO:
+                    this.cachedInfo = JSON.parse(xhr.responseText)["result"];
+                    
+                    // Generate wallet dashboard.
+                    this.generateWalletDashboard();
+                    break;
+            }
         }
+        
+        // Increment the state.
+        state += 1;
+        if (state == this.state.request.length)
+            state = 0;
         
         // (Re)start a new XMLHttpRequest.
         var call = new XMLHttpRequest();
@@ -88,9 +118,9 @@ Collate.Account.RPC = Class.create(Collate.Account, {
         call.onreadystatechange = function() 
         {
             if (call.readyState == 4)
-                ref.onRequest(call);
+                ref.onRequest(call, state);
         };
-        call.send(JSON.stringify(this.state.request));
+        call.send(JSON.stringify(this.state.request[state]));
     },
     
     // <summary>
@@ -102,6 +132,7 @@ Collate.Account.RPC = Class.create(Collate.Account, {
     {
         this.connected = false;
         this.state = null;
+        this.cachedInfo = null;
         this.cachedBalance = null;
         this.cachedTransactions = null;
         return true;
@@ -133,6 +164,31 @@ Collate.Account.RPC = Class.create(Collate.Account, {
         switch (page)
         {
             case null:
+                // Create the wallet view.
+                attach(uki(
+                    { view: 'Box', rect: '0 0 1000 1000', anchors: 'top left right width', childViews: [
+                
+                        { view: 'Label', rect: '208 70 600 0', anchors: 'top', text: this.name, style: { fontSize: '20px' } },
+                        { view: 'Label', rect: '208 70 580 0', anchors: 'top', id: 'Dashboard-Balance', html: '&#x0E3F _.__', style: { fontSize: '20px', textAlign: 'right' } },
+                
+                        // Main area
+                        { view: 'Box', rect: '200 100 600 307', anchors: 'top', id: 'Dashboard-BorderBox', childViews: [
+                            { view: 'Label', rect: '10 10 580 280', anchors: 'left top', id: 'Dashboard-Status', multiline: true,  text: 'Loading information...' },
+                        ] }
+                        
+                    ] }
+                ));
+                
+                // Now modify and attach events to the elements.
+                uki('#Dashboard-BorderBox').dom().style.border = 'solid 1px #CCC';
+                uki('#Dashboard-BorderBox').dom().style.borderRadius = '15px';
+                uki('#Dashboard-Status').dom().style.lineHeight = '20px';
+                
+                // Generate wallet dashboard.
+                this.generateWalletDashboard();
+                
+                break;
+                
             case "Transactions":
                 // Create transactions table.
                 attach(uki(
@@ -205,6 +261,27 @@ Collate.Account.RPC = Class.create(Collate.Account, {
         table.data(opts);
         if (selectedIndex != -1)
             table.selectedIndex(selectedIndex + (table.data().length - previousLength));
+    },
+    
+    // <summary>
+    // Regenerates the wallet information for the dashboard.
+    // </summary>
+    generateWalletDashboard: function($super)
+    {
+        if (this.cachedInfo != null)
+        {
+            var verString = "" + this.cachedInfo["version"];
+            var text = "Version: " + verString[0] + "." + verString[1] + verString[2] + "<br/>";
+            text += "Blocks: " + this.cachedInfo["blocks"] + "<br/>";
+            text += "Connections: " + this.cachedInfo["connections"] + "<br/>";
+            uki('#Dashboard-Status').html(text);
+            uki('#Dashboard-Balance').html("&#x0E3F " + this.cachedInfo["balance"].toFixed(2));
+        }
+        else
+        {
+            uki('#Dashboard-Status').text("Loading information...");
+            uki('#Dashboard-Balance').html("&#x0E3F _.__");
+        }
     },
     
     // <summary>

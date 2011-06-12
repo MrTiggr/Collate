@@ -53,7 +53,7 @@ Collate.Global.NewAccount = Class.create(Collate.Global, {
         Collate.Storage.setRawItem("global-accounts", s);
         
         // Create the instance of the account.
-        Collate.User.Accounts[name] = new acc(parameters);
+        Collate.User.Accounts[name] = new acc(name, parameters);
         Collate.User.Accounts[name].connect();
         
         // Regenerate the account sidebar.

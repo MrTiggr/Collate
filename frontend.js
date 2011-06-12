@@ -17,7 +17,7 @@ Collate.User = {
 var s = Collate.Storage.getRawItem("global-accounts");
 if (s != null)
     for (var i = 0; i < s.length; i += 1)
-        Collate.User.Accounts[s[i].name] = new Collate.Account[s[i]["type"]](s[i].parameters);
+        Collate.User.Accounts[s[i].name] = new Collate.Account[s[i]["type"]](s[i].name, s[i].parameters);
 
 //
 // Setup the global instances.
