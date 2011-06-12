@@ -146,7 +146,7 @@ function ClearUI()
     var area = uki('#MainArea');
     area.dom().innerHTML = "";
 }
-function LoadUI(obj)
+function LoadUI(obj, page)
 {
     var area = uki('#MainArea');
     if (obj == null)
@@ -160,7 +160,8 @@ function LoadUI(obj)
         uu.attachTo(area.dom(), '1000 1000');
         wasAttached = true;
     };
-    var result = obj.getUI(attach);
+    var result = null;
+    result = obj.getUI(attach, page);
     if (!wasAttached)
         area.dom().innerHTML = "<h2>This page is invalid.</h2>";
 }

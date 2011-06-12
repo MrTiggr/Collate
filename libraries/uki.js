@@ -7909,7 +7909,7 @@ uki.view.declare('uki.view.Toolbar', uki.view.Container, function(Base) {
             'table-header-cell': function() {
                 return new uki.theme.Template(
                     '<div style="position:relative;border-right:1px solid #CCC;'+
-                    '${style}" class="${className}">${data}</div>');
+                    '${style} font-size: 10px; line-height: 11px;" class="${className}">${data}</div>');
             },
             
             'table-cell': function() {

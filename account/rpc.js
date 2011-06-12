@@ -26,6 +26,7 @@ Collate.Account.RPC = Class.create(Collate.Account, {
         this.connected = false;
         this.state = null;
         this.cachedBalance = null;
+        this.cachedTransactions = null;
     },
     
     // <summary>
@@ -43,7 +44,7 @@ Collate.Account.RPC = Class.create(Collate.Account, {
             request: {
                 jsonrpc: 1.0,
                 id: 1,
-                method: "getbalance",
+                method: "listtransactions",
                 params: []
                 }
             };
@@ -71,7 +72,13 @@ Collate.Account.RPC = Class.create(Collate.Account, {
         // Handle the XMLHttpRequest if there is one.
         if (xhr != null)
         {
-            this.cachedBalance = JSON.parse(xhr.responseText)["result"];
+            this.cachedTransactions = JSON.parse(xhr.responseText)["result"].reverse();
+            this.cachedBalance = 0;
+            for (var i = 0; i < this.cachedTransactions.length; i += 1)
+                this.cachedBalance += this.cachedTransactions[i]["amount"];
+            
+            // Generate list of transactions.
+            this.generateTransactionList();
         }
         
         // (Re)start a new XMLHttpRequest.
@@ -96,6 +103,7 @@ Collate.Account.RPC = Class.create(Collate.Account, {
         this.connected = false;
         this.state = null;
         this.cachedBalance = null;
+        this.cachedTransactions = null;
         return true;
     },
     
@@ -115,11 +123,88 @@ Collate.Account.RPC = Class.create(Collate.Account, {
     // create this the first time it is requested, and cache it for all
     // times after that.
     // </summary>
-    // <param name="page">One of the menu items, or null.</param>
     // <param name="attach">Call this function with the generated UKI before modifying elements.</param>
-    getUI: function(page, attach)
+    // <param name="page">One of the menu items, or null.</param>
+    getUI: function(attach, page)
     {
-        return null;
+        if (!this.connected)
+            this.connect();
+        
+        switch (page)
+        {
+            case null:
+            case "Transactions":
+                // Create transactions table.
+                attach(uki(
+                    { view: 'Table', rect: '0 0 1000 1000', minSize: '0 200', id: 'Table-Transactions',
+                      anchors: 'left top right bottom', multiselect: true, rowHeight: 21, style: {fontSize: '12px',
+                      lineHeight: '14px'}, columns: [
+                        { view: 'table.Column', label: 'Status', width: 130 },
+                        { view: 'table.Column', label: 'Date', width: 130 },
+                        { view: 'table.Column', label: 'Description', resizable: true, width: 500 },
+                        { view: 'table.NumberColumn', label: 'Debit', resizable: true, minWidth: 100, width: 120 },
+                        { view: 'table.NumberColumn', label: 'Credit', resizable: true, minWidth: 100, width: 120 },
+                    ] }
+                ));
+                
+                // Generate list of transactions.
+                this.generateTransactionList();
+                
+                break;
+                
+            default:
+                return null;
+        }
+    },
+    
+    formatDate: function($super, date)
+    {
+        // Temporary padding function.
+        var padl = function(padString, length, str)
+        {
+            str = "" + str;
+            while (str.length < length) str = padString + str;
+            return str;
+        }
+        
+        // Work out how to represent hours and other date elements.
+        var d = new Date(date * 1000);
+        var hrs = d.getHours();
+        var ampm = "am";
+        if (hrs == 0) { hrs = 12; ampm = "am"; }
+        else if (hrs > 0 && hrs < 12) { hrs += 0; ampm = "am"; }
+        else { hrs -= 12; ampm = "pm"; }
+        
+        // Return the constructed string.
+        return d.getDate() + "/" +
+               padl("0", 2, d.getMonth()) + "/" +
+               d.getFullYear() + " " +
+               padl(" ", 2, hrs) + ":" +
+               padl("0", 2, d.getMinutes()) + ampm;
+    },
+    
+    // <summary>
+    // Regenerates the transaction list for the table.
+    // </summary>
+    generateTransactionList: function($super)
+    {
+        var table = uki('#Table-Transactions');
+        if (table == null || this.cachedTransactions == null) return;
+        var opts = [];
+        var selectedIndex = table.selectedIndex();
+        var previousLength = table.data().length;
+        for (var i = 0; i < this.cachedTransactions.length; i += 1)
+        {
+            var p = this.cachedTransactions[i];
+            var ds = this.formatDate(p["time"]);
+            if (p["amount"] < 0)
+                opts[opts.length] = [ p["confirmations"] + " confirmations", ds, p["address"], (-p["amount"] - p["fee"]).toFixed(2), null ];
+            else
+                opts[opts.length] = [ p["confirmations"] + " confirmations", ds, p["address"], null, p["amount"].toFixed(2) ];
+        }
+        table.data(opts);
+        if (selectedIndex != -1)
+            table.selectedIndex(selectedIndex + (table.data().length - previousLength));
     },
     
     // <summary>
