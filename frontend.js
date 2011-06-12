@@ -46,10 +46,10 @@ function GenerateAccountSidebar()
         {
             var e = items[a];
             if (typeof(e) == "string")
-                d[d.length] = { data: { toString: function() { return this.value; }, value: e, page: e, account: Collate.User.Accounts[i] } };
+                d[d.length] = { data: { toString: function() { return this.value + this.status; }, value: e, status: "", page: e, account: Collate.User.Accounts[i] } };
         }
         Collate.UI.Data.Global.IndividualWallets[Collate.UI.Data.Global.IndividualWallets.length] = {
-            data: { toString: function() { return this.value; }, value: i, page: null, account: Collate.User.Accounts[i] },
+            data: { toString: function() { return this.value + this.status; }, value: i, status: "", page: null, account: Collate.User.Accounts[i] },
             children: d,
             __opened: true
         }
@@ -59,6 +59,38 @@ function GenerateAccountSidebar()
 function ReassignAccountSidebar()
 {
     uki("#TreeView-IndividualWallets").data(Collate.UI.Data.Global.IndividualWallets);
+}
+
+function GetPageReference(searchIn, account, page)
+{
+    for (var i = 0; i < searchIn.length; i += 1)
+    {
+        var v = searchIn[i];
+        
+        // Check the object itself.
+        if (v.data.account == account && v.data.page == page)
+            return v.data;
+        
+        if (v.children != null)
+            return GetPageReference(v.children, account, page);
+    }
+    
+    return null;
+}
+
+function SetPageStatus(account, page, value)
+{
+    var v = GetPageReference(uki("#TreeView-IndividualWallets").data(), account, page);
+    if (v != null)
+    {
+        if (value == null)
+            v.status = "";
+        else
+            v.status = "<div class='treeList-unread' style='display: block;'>" + value + "</div>";
+    }
+    var s = uki("#TreeView-IndividualWallets").selectedIndex();
+    uki("#TreeView-IndividualWallets").data(uki("#TreeView-IndividualWallets").data());
+    uki("#TreeView-IndividualWallets").selectedIndex(s);
 }
 
 //
@@ -84,7 +116,7 @@ uki(
         
         // Horizontally split area
         { view: 'HSplitPane', rect: '0 45 1000 956', anchors: 'top left right width bottom height',
-          handleWidth: 1, handlePosition: 229, leftMin: 150, rightMin: 400,
+          handleWidth: 1, handlePosition: 229, leftMin: 229, fixed: true, rightMin: 600,
           leftPane: { background: "#D0D7E2", childViews: [
             
             // List of account and search area
@@ -172,6 +204,7 @@ function LoadUI(obj, page)
 //
 uki('#TreeView-AllAccounts').bind('mouseup', function()
 {
+    if (uki('#TreeView-AllAccounts').selectedRow() == null) return;
     var index = uki('#TreeView-AllAccounts').selectedRow().data;
     ClearUI();
     switch (index)
@@ -188,6 +221,7 @@ uki('#TreeView-AllAccounts').bind('mouseup', function()
 });
 uki('#TreeView-IndividualWallets').bind('mouseup', function()
 {
+    if (uki('#TreeView-IndividualWallets').selectedRow() == null) return;
     var data = uki('#TreeView-IndividualWallets').selectedRow().data;
     ClearUI();
     LoadUI(data.account, data.page);

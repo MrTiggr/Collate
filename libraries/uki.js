@@ -6955,6 +6955,7 @@ uki.view.declare('uki.view.HSplitPane', uki.view.Container, function(Base) {
             _handleWidth: 7,
             _leftMin: 100,
             _rightMin: 100,
+            _fixed: false,
             
             _panes: []
         });
@@ -6990,9 +6991,25 @@ uki.view.declare('uki.view.HSplitPane', uki.view.Container, function(Base) {
     * @name uki.view.HSplitPane#handlePosition
     */
     this.handlePosition = uki.newProp('_handlePosition', function(val) {
+        if (this._fixed) return;
         this._handlePosition = this._normalizePosition(val);
         this.trigger('handleMove', {source: this, handlePosition: this._handlePosition, dragValue: val });
         this._resizeChildViews();
+    });
+    
+    /**
+    * @function
+    * @name uki.view.HSplitPane#fixed
+    */
+    this.fixed = uki.newProp('_fixed', function(val) {
+        if (this._fixed != val) {
+            this._fixed = val;
+            var handle = this._createHandle();
+            this._dom.insertBefore(handle, this._handle);
+            this._removeHandle();
+            this._handle = handle;
+            this._resizeChildViews();
+        }
     });
     
     /**
@@ -7029,10 +7046,10 @@ uki.view.declare('uki.view.HSplitPane', uki.view.Container, function(Base) {
     this._createHandle = function() {
         var handle;
         if (this._vertical) {
-            handle = uki.theme.dom('splitPane-vertical', {handleWidth: this._handleWidth});
+            handle = uki.theme.dom('splitPane-vertical', {handleWidth: this._handleWidth, fixed: this._fixed});
             handle.style.top = this._handlePosition + PX;
         } else {
-            handle = uki.theme.dom('splitPane-horizontal', {handleWidth: this._handleWidth});
+            handle = uki.theme.dom('splitPane-horizontal', {handleWidth: this._handleWidth, fixed: this._fixed});
             handle.style.left = this._handlePosition + PX;
         }
         
@@ -7940,7 +7957,9 @@ uki.view.declare('uki.view.Toolbar', uki.view.Container, function(Base) {
                 return node;
             },
             'splitPane-vertical': function(params) {
-                var commonVerticalStyle = 'cursor:row-resize;cursor:ns-resize;z-index:200;overflow:hidden;',
+                var cursor = 'cursor:col-resize;cursor:ew-resize';
+                if (params.fixed) cursor = 'cursor:default';
+                var commonVerticalStyle = cursor + ';z-index:200;overflow:hidden;',
                     handle = params.handleWidth == 1 ?
                     uki.createElement('div', 
                         defaultCss + 'width:100%;height:5px;margin-top:-2px;' + 
@@ -7957,7 +7976,9 @@ uki.view.declare('uki.view.Toolbar', uki.view.Container, function(Base) {
             },
             
             'splitPane-horizontal': function(params) {
-                var commonHorizontalStyle = 'cursor:col-resize;cursor:ew-resize;z-index:200;overflow:hidden;',
+                var cursor = 'cursor:col-resize;cursor:ew-resize';
+                if (params.fixed) cursor = 'cursor:default';
+                var commonHorizontalStyle = cursor + ';z-index:200;overflow:hidden;',
                     handle = params.handleWidth == 1 ?
                     uki.createElement('div', 
                         defaultCss + 'height:100%;width:5px;margin-left:-2px;' + 

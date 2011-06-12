@@ -102,6 +102,22 @@ Collate.Account.RPC = Class.create(Collate.Account, {
                     
                     // Generate wallet dashboard.
                     this.generateWalletDashboard();
+                    
+                    // Generate mining dashboard.
+                    this.generateMiningDashboard();
+                    
+                    // Set the balance in the sidebar.
+                    if (this.cachedInfo == null)
+                        SetPageStatus(this, null, null);
+                    else
+                        SetPageStatus(this, null, "&#x0E3F " + this.cachedInfo["balance"].toFixed(2));
+                    
+                    // Set the mining information in the sidebar.
+                    if (this.cachedInfo == null || !this.cachedInfo["generate"])
+                        SetPageStatus(this, "Mining (Generation)", null);
+                    else
+                        SetPageStatus(this, "Mining (Generation)", (this.cachedInfo["hashespersec"] / 1024 / 1024).toFixed(2) + " Mh/s");
+                    
                     break;
             }
         }
@@ -121,6 +137,29 @@ Collate.Account.RPC = Class.create(Collate.Account, {
                 ref.onRequest(call, state);
         };
         call.send(JSON.stringify(this.state.request[state]));
+    },
+    
+    // <summary>
+    // Sends a command to the server indicating whether or not it
+    // should be generating coins.
+    // </summary>
+    toggleGenerate: function(generate)
+    {
+        var call = new XMLHttpRequest();
+        var ref = this;
+        call.open("POST", this.state.url, true, this.settings.username, this.settings.password);
+        call.onreadystatechange = function() 
+        {
+            // Nothing to do...
+        };
+        call.send(JSON.stringify(
+            { // RPC_STATE_SETGENERATE
+                jsonrpc: 1.0,
+                id: 1,
+                method: "setgenerate",
+                params: [generate]
+            }
+        ));
     },
     
     // <summary>
@@ -172,7 +211,7 @@ Collate.Account.RPC = Class.create(Collate.Account, {
                         { view: 'Label', rect: '208 70 580 0', anchors: 'top', id: 'Dashboard-Balance', html: '&#x0E3F _.__', style: { fontSize: '20px', textAlign: 'right' } },
                 
                         // Main area
-                        { view: 'Box', rect: '200 100 600 307', anchors: 'top', id: 'Dashboard-BorderBox', childViews: [
+                        { view: 'Box', rect: '200 100 600 300', anchors: 'top', id: 'Dashboard-BorderBox', childViews: [
                             { view: 'Label', rect: '10 10 580 280', anchors: 'left top', id: 'Dashboard-Status', multiline: true,  text: 'Loading information...' },
                         ] }
                         
@@ -205,6 +244,39 @@ Collate.Account.RPC = Class.create(Collate.Account, {
                 
                 // Generate list of transactions.
                 this.generateTransactionList();
+                
+                break;
+                
+            case "Mining (Generation)":
+                // Create the mining generation.
+                attach(uki(
+                    { view: 'Box', rect: '0 0 1000 1000', anchors: 'top left right width', childViews: [
+                
+                        { view: 'Label', rect: '208 70 600 0', anchors: 'top', text: this.name + " (Mining)", style: { fontSize: '20px' } },
+                        { view: 'Label', rect: '208 70 580 0', anchors: 'top', id: 'MiningDashboard-HashRate', html: '_ Mhashes/sec', style: { fontSize: '20px', textAlign: 'right' } },
+                
+                        // Main area
+                        { view: 'Box', rect: '200 100 600 300', anchors: 'top', id: 'MiningDashboard-BorderBox', childViews: [
+                            { view: 'Label', rect: '10 10 580 280', anchors: 'left top', id: 'MiningDashboard-Status', multiline: true,  text: 'Loading information...' },
+                            { view: 'Button', rect: '490 265 100 24', anchors: 'bottom right', id: 'MiningDashboard-Toggle', text: '...' },
+                        ] }
+                        
+                    ] }
+                ));
+                
+                // Now modify and attach events to the elements.
+                var me = this;
+                uki('#MiningDashboard-BorderBox').dom().style.border = 'solid 1px #CCC';
+                uki('#MiningDashboard-BorderBox').dom().style.borderRadius = '15px';
+                uki('#MiningDashboard-Status').dom().style.lineHeight = '20px';
+                uki('#MiningDashboard-Toggle').bind('click', function()
+                {
+                    if (me.cachedInfo == null) return;
+                    me.toggleGenerate(!me.cachedInfo["generate"]);
+                });
+                
+                // Generate mining dashboard.
+                this.generateMiningDashboard();
                 
                 break;
                 
@@ -281,6 +353,42 @@ Collate.Account.RPC = Class.create(Collate.Account, {
         {
             uki('#Dashboard-Status').text("Loading information...");
             uki('#Dashboard-Balance').html("&#x0E3F _.__");
+        }
+    },
+    
+    // <summary>
+    // Regenerates the mining information for the dashboard.
+    // </summary>
+    generateMiningDashboard: function($super)
+    {
+        if (this.cachedInfo != null)
+        {
+            var text = null;
+            if (this.cachedInfo["generate"])
+            {
+                text  = "This server is mining for blocks using the CPU.<br/>";
+                text += "<br/>";
+                //text += "At a difficulty of " + this.cachedInfo["difficulty"].toFixed(2) + ", it is estimated that it will take</br>";
+                //text += "<strong>106 days, 4 hours, 23 minutes</strong><br/>";
+                //text += "before this miner finds a block.<br/>";
+                //text += "<br/>";
+                text += "You can stop mining by clicking the 'Stop Mining' button below.";
+                uki('#MiningDashboard-HashRate').html((this.cachedInfo["hashespersec"] / 1024 / 1024).toFixed(2) + " Mhashes/sec");
+                uki('#MiningDashboard-Toggle').text('Stop Mining');
+            }
+            else
+            {
+                text = "This server is currently not mining.  You can start mining by clicking the 'Start Mining' button below.";
+                uki('#MiningDashboard-HashRate').html("");
+                uki('#MiningDashboard-Toggle').text('Start Mining');
+            }
+            uki('#MiningDashboard-Status').html(text);
+        }
+        else
+        {
+            uki('#MiningDashboard-Status').text("Loading information...");
+            uki('#MiningDashboard-HashRate').html("_ Mhashes/sec");
+            uki('#MiningDashboard-Toggle').text('...');
         }
     },
     
