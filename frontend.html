@@ -3,27 +3,27 @@
 <head>
 <link rel="icon" type="image/png" href="iconfav.png" />
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/prototype/1.7.0.0/prototype.js"></script>
+<script type="text/javascript" src="libraries/sha1.js"></script>
 <script type="text/javascript" src="libraries/uki.js"></script>
 <script type="text/javascript" src="libraries/uki-more.js"></script>
 <script type="text/javascript" src="libraries/json2.js"></script>
-<script type="text/javascript">
-<!--
-var Collate = {};
--->
-</script>
 <script type="text/javascript" src="version.js"></script>
-<script type="text/javascript" src="storage.js"></script>
-<script type="text/javascript" src="account.js"></script>
-<script type="text/javascript" src="account/rpc.js"></script>
-<script type="text/javascript" src="account/mtgox.js"></script>
-<script type="text/javascript" src="global.js"></script>
-<script type="text/javascript" src="global/dashboard.js"></script>
-<script type="text/javascript" src="global/newaccount.js"></script>
+<script type="text/javascript" src="frontend.js"></script>
 <style type="text/css">
     body, html { padding: 0; margin: 0; overflow: hidden; width: 100%; height: 100%; } 
 </style>
 </head>
 <body>
-<script type="text/javascript" src="frontend.js"></script>
+<script type="text/javascript">
+<!--
+
+// First get a reference to the backend.
+var bg = chrome.extension.getBackgroundPage();
+
+// Start Collate UI.
+window.Frontend = new Collate.Frontend(bg.Backend);
+
+-->
+</script>
 </body>
 </html>

@@ -12,7 +12,7 @@
 Collate.Account = Class.create({
 
     // <summary>
-    // Initalizes the base class (this doesn't do anything).
+    // Initializes the base class (this doesn't do anything).
     // </summary>
     // <param name="name">The name of this account as it appears in Collate.</param>
     // <param name="parameters">The custom settings applicable to this account.</param>
@@ -44,6 +44,16 @@ Collate.Account = Class.create({
     },
     
     // <summary>
+    // Requests a list of toolbar items to show at the top of the screen while
+    // this account is in the active window.
+    // </summary>
+    getToolbar: function()
+    {
+        // There's no toolbar items as this isn't a proper class.
+        return null;
+    },
+    
+    // <summary>
     // Requests a list of subitems to show in the sidebar, or null
     // if the top-level item will be used.  In the later case, null
     // will be passed to getUI instead of one of the strings in the array.
@@ -60,8 +70,9 @@ Collate.Account = Class.create({
     // times after that.
     // </summary>
     // <param name="attach">Call this function with the generated UKI before modifying elements.</param>
+    // <param name="uiid">A unique ID which should precede any DOM or UKI elements created or referenced.  Store it for later use.</param>
     // <param name="page">One of the menu items, or null.</param>
-    getUI: function(attach, page)
+    getUI: function(attach, uiid, page)
     {
         // There's no UI as this isn't a proper class.
         return null;

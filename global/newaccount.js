@@ -11,7 +11,7 @@
 Collate.Global.NewAccount = Class.create(Collate.Global, {
 
     // <summary>
-    // Initalizes the new account page.
+    // Initializes the new account page.
     // </summary>
     initialize: function()
     {
@@ -29,14 +29,14 @@ Collate.Global.NewAccount = Class.create(Collate.Global, {
             switch (p.type)
             {
                 case "Text":
-                    views[views.length] = { view: 'TextField', rect: '100 ' + (241 + y) + ' 200 22', anchors: 'left top', id: "Parameters-" + p.name, placeholder: p.default };
+                    views[views.length] = { view: 'TextField', rect: '100 ' + (241 + y) + ' 200 22', anchors: 'left top', id: this.uiid + "-Parameters-" + p.name, placeholder: p.default };
                     break;
                 default:
                     break;
             }
             y += 24;
         }
-        uki(views).attachTo(uki('#NewAccount-Options').dom(), '580 280');
+        uki(views).attachTo(uki('#' + this.uiid + '-Options').dom(), '580 280');
     },
     
     createAccount: function(acc, name, parameters)
@@ -85,16 +85,16 @@ Collate.Global.NewAccount = Class.create(Collate.Global, {
                 { view: 'Label', rect: '208 70 600 0', anchors: 'top', text: 'New Account Wizard', style: { fontSize: '20px' } },
         
                 // Main area
-                { view: 'Box', rect: '200 100 600 300', anchors: 'top', id: 'NewAccount-BorderBox', childViews: [
+                { view: 'Box', rect: '200 100 600 300', anchors: 'top', id: this.uiid + '-BorderBox', childViews: [
                     { view: 'Label', rect: '10 10 300 22', anchors: 'left top', text: 'What kind of account do you want to add?' },
-                    { view: 'Select', rect: '320 10 270 22', anchors: 'left top', id: 'NewAccount-AccountType', rowHeight: 22, options: opts },
+                    { view: 'Select', rect: '320 10 270 22', anchors: 'left top', id: this.uiid + '-AccountType', rowHeight: 22, options: opts },
                     { view: 'Label', rect: '10 37 300 22', anchors: 'left top', text: 'What do you want to call this account?' },
-                    { view: 'TextField', rect: '320 37 270 22', anchors: 'left top', id: 'NewAccount-AccountName' },
-                    { view: 'Box', rect: '0 67 600 0', anchors: 'top', id: 'NewAccount-BorderLine1', childViews: [ ] },
+                    { view: 'TextField', rect: '320 37 270 22', anchors: 'left top', id: this.uiid + '-AccountName' },
+                    { view: 'Box', rect: '0 67 600 0', anchors: 'top', id: this.uiid + '-BorderLine1', childViews: [ ] },
                     
-                    { view: 'Label', rect: '10 77 580 280', anchors: 'left top', id: 'NewAccount-AccountDesc', multiline: true, html: opts[0].value.Description },
-                    { view: 'Box', rect: '10 50 580 280', anchors: 'bottom', id: 'NewAccount-Options', childViews: [ ] },
-                    { view: 'Button', rect: '490 265 100 24', anchors: 'bottom right', id: 'NewAccount-Create', text: 'Create' },
+                    { view: 'Label', rect: '10 77 580 280', anchors: 'left top', id: this.uiid + '-AccountDesc', multiline: true, html: opts[0].value.Description },
+                    { view: 'Box', rect: '10 50 580 280', anchors: 'bottom', id: this.uiid + '-Options', childViews: [ ] },
+                    { view: 'Button', rect: '490 265 100 24', anchors: 'bottom right', id: this.uiid + '-Create', text: 'Create' },
                 ] }
                 
             ] }
@@ -102,21 +102,21 @@ Collate.Global.NewAccount = Class.create(Collate.Global, {
         
         // Now modify and attach events to the elements.
         var me = this;
-        uki('#NewAccount-BorderBox').dom().style.border = 'solid 1px #CCC';
-        uki('#NewAccount-BorderBox').dom().style.borderRadius = '15px';
-        uki('#NewAccount-BorderLine1').dom().style.border = 'none';
-        uki('#NewAccount-BorderLine1').dom().style.borderTop = 'solid 1px #CCC';
-        uki('#NewAccount-AccountType').bind('click', function ()
+        uki('#' + this.uiid + '-BorderBox').dom().style.border = 'solid 1px #CCC';
+        uki('#' + this.uiid + '-BorderBox').dom().style.borderRadius = '15px';
+        uki('#' + this.uiid + '-BorderLine1').dom().style.border = 'none';
+        uki('#' + this.uiid + '-BorderLine1').dom().style.borderTop = 'solid 1px #CCC';
+        uki('#' + this.uiid + '-AccountType').bind('click', function ()
         {
-            var value = uki('#NewAccount-AccountType').value();
-            uki('#NewAccount-AccountDesc').html(value.Description);
+            var value = uki('#' + this.uiid + '-AccountType').value();
+            uki('#' + this.uiid + '-AccountDesc').html(value.Description);
             
             me.setupParameters(value.Parameters);
         });
-        uki('#NewAccount-Create').bind('click', function ()
+        uki('#' + this.uiid + '-Create').bind('click', function ()
         {
-            var value = uki('#NewAccount-AccountType').value();
-            var name = uki('#NewAccount-AccountName').value();
+            var value = uki('#' + this.uiid + '-AccountType').value();
+            var name = uki('#' + this.uiid + '-AccountName').value();
             
             // Check to see if the name is valid.
             if (name == null || typeof(name) != "string" || name.length == 0)
@@ -139,7 +139,7 @@ Collate.Global.NewAccount = Class.create(Collate.Global, {
             var params = {};
             for (var i = 0; i < value.Parameters.length; i += 1)
             {
-                params[value.Parameters[i].name] = uki("#Parameters-" + value.Parameters[i].name).value();
+                params[value.Parameters[i].name] = uki("#" + this.uiid + "-Parameters-" + value.Parameters[i].name).value();
             }
             
             me.createAccount(value, name, params);

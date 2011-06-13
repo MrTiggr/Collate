@@ -9,10 +9,10 @@
  *
  */
 
-Collate.Storage = Class.create({
+Collate.Backend.Storage = Class.create({
 
     // <summary>
-    // Initalizes the class.
+    // Initializes the class.
     // </summary>
     initialize: function()
     {
@@ -42,4 +42,3 @@ Collate.Storage = Class.create({
     }
     
 });
-Collate.Storage = new Collate.Storage();

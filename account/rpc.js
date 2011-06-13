@@ -15,7 +15,7 @@ const RPC_STATE_LISTTRANSACTIONS = 1;
 Collate.Account.RPC = Class.create(Collate.Account, {
 
     // <summary>
-    // Initalizes an RPC-based account, such as a connection to a local or remote
+    // Initializes an RPC-based account, such as a connection to a local or remote
     // BitCoin server.
     // </summary>
     // <param name="name">The name of this account as it appears in Collate.</param>
@@ -23,6 +23,7 @@ Collate.Account.RPC = Class.create(Collate.Account, {
     initialize: function(name, parameters)
     {
         this.name = name;
+        this.uiid = null;
         this.settings = {
             host: parameters.host || "localhost",
             port: parameters.port || "8332",
@@ -34,6 +35,7 @@ Collate.Account.RPC = Class.create(Collate.Account, {
         this.cachedInfo = null;
         this.cachedBalance = null;
         this.cachedTransactions = null;
+        this.miningChanging = false;
     },
     
     // <summary>
@@ -84,7 +86,7 @@ Collate.Account.RPC = Class.create(Collate.Account, {
             return;
         
         // Handle the XMLHttpRequest if there is one.
-        if (xhr != null)
+        if (xhr != null && xhr.responseText != "")
         {
             switch (state)
             {
@@ -94,11 +96,17 @@ Collate.Account.RPC = Class.create(Collate.Account, {
                     for (var i = 0; i < this.cachedTransactions.length; i += 1)
                         this.cachedBalance += this.cachedTransactions[i]["amount"];
                     
+                    // Skip the next part if we can't update the UI.
+                    if (!uki) break;
+                    
                     // Generate list of transactions.
                     this.generateTransactionList();
                     break;
                 case RPC_STATE_GETINFO:
                     this.cachedInfo = JSON.parse(xhr.responseText)["result"];
+                    
+                    // Skip the next part if we can't update the UI.
+                    if (!uki) break;
                     
                     // Generate wallet dashboard.
                     this.generateWalletDashboard();
@@ -108,15 +116,15 @@ Collate.Account.RPC = Class.create(Collate.Account, {
                     
                     // Set the balance in the sidebar.
                     if (this.cachedInfo == null)
-                        SetPageStatus(this, null, null);
+                        Backend.getFrontend().setPageStatus(this, null, null);
                     else
-                        SetPageStatus(this, null, "&#x0E3F " + this.cachedInfo["balance"].toFixed(2));
+                        Backend.getFrontend().setPageStatus(this, null, "&#x0E3F " + this.cachedInfo["balance"].toFixed(2));
                     
                     // Set the mining information in the sidebar.
                     if (this.cachedInfo == null || !this.cachedInfo["generate"])
-                        SetPageStatus(this, "Mining (Generation)", null);
+                        Backend.getFrontend().setPageStatus(this, "Mining (Generation)", null);
                     else
-                        SetPageStatus(this, "Mining (Generation)", (this.cachedInfo["hashespersec"] / 1024 / 1024).toFixed(2) + " Mh/s");
+                        Backend.getFrontend().setPageStatus(this, "Mining (Generation)", (this.cachedInfo["hashespersec"] / 1024 / 1024).toFixed(2) + " Mh/s");
                     
                     break;
             }
@@ -129,12 +137,12 @@ Collate.Account.RPC = Class.create(Collate.Account, {
         
         // (Re)start a new XMLHttpRequest.
         var call = new XMLHttpRequest();
-        var ref = this;
+        var me = this;
         call.open("POST", this.state.url, true, this.settings.username, this.settings.password);
         call.onreadystatechange = function() 
         {
             if (call.readyState == 4)
-                ref.onRequest(call, state);
+                me.onRequest(call, state);
         };
         call.send(JSON.stringify(this.state.request[state]));
     },
@@ -146,11 +154,12 @@ Collate.Account.RPC = Class.create(Collate.Account, {
     toggleGenerate: function(generate)
     {
         var call = new XMLHttpRequest();
-        var ref = this;
+        var me = this;
         call.open("POST", this.state.url, true, this.settings.username, this.settings.password);
         call.onreadystatechange = function() 
         {
-            // Nothing to do...
+            // Turn off the mining changing state.
+            me.miningChanging = false;
         };
         call.send(JSON.stringify(
             { // RPC_STATE_SETGENERATE
@@ -178,6 +187,23 @@ Collate.Account.RPC = Class.create(Collate.Account, {
     },
     
     // <summary>
+    // Requests a list of toolbar items to show at the top of the screen while
+    // this account is in the active window.
+    // </summary>
+    getToolbar: function()
+    {
+        // Return the relevant toolbar items for the dashboard.
+        return [
+                {
+                    text: "Send Coins",
+                    width: 100,
+                    target: this,
+                    page: "Send Coins"
+                }
+            ];
+    },
+    
+    // <summary>
     // Requests a list of subitems to show in the sidebar, or null
     // if the top-level item will be used.  In the later case, null
     // will be passed to getUI instead of one of the strings in the array.
@@ -195,10 +221,11 @@ Collate.Account.RPC = Class.create(Collate.Account, {
     // </summary>
     // <param name="attach">Call this function with the generated UKI before modifying elements.</param>
     // <param name="page">One of the menu items, or null.</param>
-    getUI: function(attach, page)
+    getUI: function(attach, uiid, page)
     {
         if (!this.connected)
             this.connect();
+        this.uiid = uiid;
         
         switch (page)
         {
@@ -208,20 +235,20 @@ Collate.Account.RPC = Class.create(Collate.Account, {
                     { view: 'Box', rect: '0 0 1000 1000', anchors: 'top left right width', childViews: [
                 
                         { view: 'Label', rect: '208 70 600 0', anchors: 'top', text: this.name, style: { fontSize: '20px' } },
-                        { view: 'Label', rect: '208 70 580 0', anchors: 'top', id: 'Dashboard-Balance', html: '&#x0E3F _.__', style: { fontSize: '20px', textAlign: 'right' } },
+                        { view: 'Label', rect: '208 70 580 0', anchors: 'top', id: this.uiid + '-Dashboard-Balance', html: '&#x0E3F _.__', style: { fontSize: '20px', textAlign: 'right' } },
                 
                         // Main area
-                        { view: 'Box', rect: '200 100 600 300', anchors: 'top', id: 'Dashboard-BorderBox', childViews: [
-                            { view: 'Label', rect: '10 10 580 280', anchors: 'left top', id: 'Dashboard-Status', multiline: true,  text: 'Loading information...' },
+                        { view: 'Box', rect: '200 100 600 300', anchors: 'top', id: this.uiid + '-Dashboard-BorderBox', childViews: [
+                            { view: 'Label', rect: '10 10 580 280', anchors: 'left top', id: this.uiid + '-Dashboard-Status', multiline: true,  text: 'Loading information...' },
                         ] }
                         
                     ] }
                 ));
                 
                 // Now modify and attach events to the elements.
-                uki('#Dashboard-BorderBox').dom().style.border = 'solid 1px #CCC';
-                uki('#Dashboard-BorderBox').dom().style.borderRadius = '15px';
-                uki('#Dashboard-Status').dom().style.lineHeight = '20px';
+                uki('#' + this.uiid + '-Dashboard-BorderBox').dom().style.border = 'solid 1px #CCC';
+                uki('#' + this.uiid + '-Dashboard-BorderBox').dom().style.borderRadius = '15px';
+                uki('#' + this.uiid + '-Dashboard-Status').dom().style.lineHeight = '20px';
                 
                 // Generate wallet dashboard.
                 this.generateWalletDashboard();
@@ -231,7 +258,7 @@ Collate.Account.RPC = Class.create(Collate.Account, {
             case "Transactions":
                 // Create transactions table.
                 attach(uki(
-                    { view: 'Table', rect: '0 0 1000 1000', minSize: '0 200', id: 'Table-Transactions',
+                    { view: 'Table', rect: '0 0 1000 1000', minSize: '0 200', id: this.uiid + '-Transactions',
                       anchors: 'left top right bottom', multiselect: true, rowHeight: 21, style: {fontSize: '12px',
                       lineHeight: '14px'}, columns: [
                         { view: 'table.Column', label: 'Status', width: 130 },
@@ -253,12 +280,12 @@ Collate.Account.RPC = Class.create(Collate.Account, {
                     { view: 'Box', rect: '0 0 1000 1000', anchors: 'top left right width', childViews: [
                 
                         { view: 'Label', rect: '208 70 600 0', anchors: 'top', text: this.name + " (Mining)", style: { fontSize: '20px' } },
-                        { view: 'Label', rect: '208 70 580 0', anchors: 'top', id: 'MiningDashboard-HashRate', html: '_ Mhashes/sec', style: { fontSize: '20px', textAlign: 'right' } },
+                        { view: 'Label', rect: '208 70 580 0', anchors: 'top', id: this.uiid + '-Mining-HashRate', html: '_ Mhashes/sec', style: { fontSize: '20px', textAlign: 'right' } },
                 
                         // Main area
-                        { view: 'Box', rect: '200 100 600 300', anchors: 'top', id: 'MiningDashboard-BorderBox', childViews: [
-                            { view: 'Label', rect: '10 10 580 280', anchors: 'left top', id: 'MiningDashboard-Status', multiline: true,  text: 'Loading information...' },
-                            { view: 'Button', rect: '490 265 100 24', anchors: 'bottom right', id: 'MiningDashboard-Toggle', text: '...' },
+                        { view: 'Box', rect: '200 100 600 300', anchors: 'top', id: this.uiid + '-Mining-BorderBox', childViews: [
+                            { view: 'Label', rect: '10 10 580 280', anchors: 'left top', id: this.uiid + '-Mining-Status', multiline: true,  text: 'Loading information...' },
+                            { view: 'Button', rect: '490 265 100 24', anchors: 'bottom right', id: this.uiid + '-Mining-Toggle', text: '...' },
                         ] }
                         
                     ] }
@@ -266,12 +293,15 @@ Collate.Account.RPC = Class.create(Collate.Account, {
                 
                 // Now modify and attach events to the elements.
                 var me = this;
-                uki('#MiningDashboard-BorderBox').dom().style.border = 'solid 1px #CCC';
-                uki('#MiningDashboard-BorderBox').dom().style.borderRadius = '15px';
-                uki('#MiningDashboard-Status').dom().style.lineHeight = '20px';
-                uki('#MiningDashboard-Toggle').bind('click', function()
+                uki('#' + this.uiid + '-Mining-BorderBox').dom().style.border = 'solid 1px #CCC';
+                uki('#' + this.uiid + '-Mining-BorderBox').dom().style.borderRadius = '15px';
+                uki('#' + this.uiid + '-Mining-Status').dom().style.lineHeight = '20px';
+                uki('#' + this.uiid + '-Mining-Toggle').bind('click', function()
                 {
                     if (me.cachedInfo == null) return;
+                    me.miningChanging = true;
+                    Backend.getFrontend().setPageStatus(this, "Mining (Generation)", "...");
+                    
                     me.toggleGenerate(!me.cachedInfo["generate"]);
                 });
                 
@@ -283,6 +313,18 @@ Collate.Account.RPC = Class.create(Collate.Account, {
             default:
                 return null;
         }
+        
+        // Set the balance in the sidebar.
+        if (this.cachedInfo == null)
+            Backend.getFrontend().setPageStatus(this, null, null);
+        else
+            Backend.getFrontend().setPageStatus(this, null, "&#x0E3F " + this.cachedInfo["balance"].toFixed(2));
+        
+        // Set the mining information in the sidebar.
+        if (this.cachedInfo == null || !this.cachedInfo["generate"])
+            Backend.getFrontend().setPageStatus(this, "Mining (Generation)", null);
+        else
+            Backend.getFrontend().setPageStatus(this, "Mining (Generation)", (this.cachedInfo["hashespersec"] / 1024 / 1024).toFixed(2) + " Mh/s");
     },
     
     formatDate: function($super, date)
@@ -316,7 +358,9 @@ Collate.Account.RPC = Class.create(Collate.Account, {
     // </summary>
     generateTransactionList: function($super)
     {
-        var table = uki('#Table-Transactions');
+        if (!uki) return;
+        
+        var table = uki('#' + this.uiid + '-Transactions');
         if (table == null || this.cachedTransactions == null) return;
         var opts = [];
         var selectedIndex = table.selectedIndex();
@@ -340,19 +384,21 @@ Collate.Account.RPC = Class.create(Collate.Account, {
     // </summary>
     generateWalletDashboard: function($super)
     {
+        if (!uki) return;
+        
         if (this.cachedInfo != null)
         {
             var verString = "" + this.cachedInfo["version"];
             var text = "Version: " + verString[0] + "." + verString[1] + verString[2] + "<br/>";
             text += "Blocks: " + this.cachedInfo["blocks"] + "<br/>";
             text += "Connections: " + this.cachedInfo["connections"] + "<br/>";
-            uki('#Dashboard-Status').html(text);
-            uki('#Dashboard-Balance').html("&#x0E3F " + this.cachedInfo["balance"].toFixed(2));
+            uki('#' + this.uiid + '-Dashboard-Status').html(text);
+            uki('#' + this.uiid + '-Dashboard-Balance').html("&#x0E3F " + this.cachedInfo["balance"].toFixed(2));
         }
         else
         {
-            uki('#Dashboard-Status').text("Loading information...");
-            uki('#Dashboard-Balance').html("&#x0E3F _.__");
+            uki('#' + this.uiid + '-Dashboard-Status').text("Loading information...");
+            uki('#' + this.uiid + '-Dashboard-Balance').html("&#x0E3F _.__");
         }
     },
     
@@ -361,6 +407,8 @@ Collate.Account.RPC = Class.create(Collate.Account, {
     // </summary>
     generateMiningDashboard: function($super)
     {
+        if (!uki) return;
+        
         if (this.cachedInfo != null)
         {
             var text = null;
@@ -373,22 +421,30 @@ Collate.Account.RPC = Class.create(Collate.Account, {
                 //text += "before this miner finds a block.<br/>";
                 //text += "<br/>";
                 text += "You can stop mining by clicking the 'Stop Mining' button below.";
-                uki('#MiningDashboard-HashRate').html((this.cachedInfo["hashespersec"] / 1024 / 1024).toFixed(2) + " Mhashes/sec");
-                uki('#MiningDashboard-Toggle').text('Stop Mining');
+                uki('#' + this.uiid + '-Mining-HashRate').html((this.cachedInfo["hashespersec"] / 1024 / 1024).toFixed(2) + " Mhashes/sec");
+                uki('#' + this.uiid + '-Mining-Toggle').text('Stop Mining');
+                uki('#' + this.uiid + '-Mining-Toggle').visible(true);
+            }
+            else if (this.miningChanging)
+            {
+                text = "This server is currently changing the mining status.  This can take up to a minute.";
+                uki('#' + this.uiid + '-Mining-HashRate').html("");
+                uki('#' + this.uiid + '-Mining-Toggle').visible(false);
             }
             else
             {
                 text = "This server is currently not mining.  You can start mining by clicking the 'Start Mining' button below.";
-                uki('#MiningDashboard-HashRate').html("");
-                uki('#MiningDashboard-Toggle').text('Start Mining');
+                uki('#' + this.uiid + '-Mining-HashRate').html("");
+                uki('#' + this.uiid + '-Mining-Toggle').text('Start Mining');
+                uki('#' + this.uiid + '-Mining-Toggle').visible(true);
             }
-            uki('#MiningDashboard-Status').html(text);
+            uki('#' + this.uiid + '-Mining-Status').html(text);
         }
         else
         {
-            uki('#MiningDashboard-Status').text("Loading information...");
-            uki('#MiningDashboard-HashRate').html("_ Mhashes/sec");
-            uki('#MiningDashboard-Toggle').text('...');
+            uki('#' + this.uiid + '-Mining-Status').text("Loading information...");
+            uki('#' + this.uiid + '-Mining-HashRate').html("_ Mhashes/sec");
+            uki('#' + this.uiid + '-Mining-Toggle').text('...');
         }
     },
     

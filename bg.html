@@ -2,35 +2,21 @@
 <html>
 <head>
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/prototype/1.7.0.0/prototype.js"></script>
+<script type="text/javascript" src="version.js"></script>
+<script type="text/javascript" src="account.js"></script>
+<script type="text/javascript" src="account/rpc.js"></script>
+<script type="text/javascript" src="account/mtgox.js"></script>
+<script type="text/javascript" src="global.js"></script>
+<script type="text/javascript" src="global/dashboard.js"></script>
+<script type="text/javascript" src="global/newaccount.js"></script>
+<script type="text/javascript" src="backend.js"></script>
+<script type="text/javascript" src="backend/storage.js"></script>
+<script type="text/javascript" src="backend/accountmanager.js"></script>
 <script type="text/javascript">
 <!--
 
-var Collate = {};
-Collate.CurrentTab = null;
-
-// Register our onClicked event handler.
-chrome.browserAction.onClicked.addListener(function(tab)
-{
-    // Check to see if the tab already exists; if it does, switch to it.
-    if (Collate.CurrentTab != null)
-    {
-        chrome.tabs.update(Collate.CurrentTab.id, {selected: true, pinned: true});
-        return;
-    }
-
-    // Create a new tab page that opens the front-end for Collate.
-    chrome.tabs.create({url: "frontend.html", selected: true, pinned: true}, function(tab)
-    {
-        Collate.CurrentTab = tab;
-    });
-});
-
-// Register our onRemoved event handler.
-chrome.tabs.onRemoved.addListener(function(tabId, removeInfo)
-{
-    if (tabId == Collate.CurrentTab.id)
-        Collate.CurrentTab = null;
-});
+// Start Collate.
+window.Backend = new Collate.Backend();
 
 -->
 </script>
