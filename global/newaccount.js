@@ -71,7 +71,7 @@ Collate.Global.NewAccount = Class.create(Collate.Global, {
     createAccount: function(acc, name, parameters)
     {
         // Add the account details to local storage.
-        var s = Collate.Storage.getRawItem("global-accounts");
+        var s = Backend.Storage.getRawItem("global-accounts");
         if (s == null)
             s = [];
         s[s.length] = {
@@ -79,15 +79,14 @@ Collate.Global.NewAccount = Class.create(Collate.Global, {
             name: name,
             parameters: parameters
             };
-        Collate.Storage.setRawItem("global-accounts", s);
+        Backend.Storage.setRawItem("global-accounts", s);
         
         // Create the instance of the account.
-        Collate.User.Accounts[name] = new acc(name, parameters);
-        Collate.User.Accounts[name].connect();
+        Backend.Accounts[name] = new acc(name, parameters);
+        Backend.Accounts[name].connect();
         
         // Regenerate the account sidebar.
-        GenerateAccountSidebar();
-        ReassignAccountSidebar();
+        Backend.getFrontend().refreshSidebar();
     },
     
     // <summary>
@@ -155,7 +154,7 @@ Collate.Global.NewAccount = Class.create(Collate.Global, {
             }
             
             // Check to see if it already exists.
-            for (var i in Collate.User.Accounts)
+            for (var i in Backend.Accounts)
             {
                 if (i == name)
                 {
