@@ -303,24 +303,16 @@ Collate.Frontend = Class.create({
         {
             var button = uki({ view: 'Button', rect: x + ' 10 ' + data[i].width + ' 24', anchors: 'left top' }).attachTo(toolbar.dom());
             var me = this;
-            var n = data[i];
-            button.text(n.text);
+            button[0].data = data[i];
+            button.text(data[i].text);
             button.bind('click', function()
             {
                 me.clearUI();
-                me.loadUI(n.target, n.text, n.page);
+                me.loadUI(this.data.target, this.data.text, this.data.page);
             });
             
             x += 130;
         }
-        
-        // Toolbar buttons
-        //            { view: 'Button', rect: '10 10 121 24', anchors: 'left top', id: 'Tools-NewAccount', text: 'New Account'},
-    
-        //uki('#Tools-NewAccount').bind('click', function() {
-        //    this.clearUI();
-        //    this.loadUI(this.Backend.Pages["NewAccount"], "NewAccount", null);
-        //});
     }
     
 });

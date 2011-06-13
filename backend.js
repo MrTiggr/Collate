@@ -30,8 +30,8 @@ Collate.Backend = Class.create({
         chrome.tabs.onRemoved.addListener(function(tabId) { me.onTabRemoved(tabId); });
         
         // Set the default text.
-        //chrome.browserAction.setBadgeBackgroundColor([255, 0, 0, 255]);
-        chrome.browserAction.setBadgeText({text: "..."});
+        chrome.browserAction.setBadgeBackgroundColor({ color: [255, 0, 0, 255] });
+        chrome.browserAction.setBadgeText({ text: "..." });
         
         // Start the storage system.
         this.Storage = new Collate.Backend.Storage();
@@ -154,5 +154,22 @@ Collate.Backend = Class.create({
                 return null;
         }
     },
+    
+    // <summary>
+    // Causes the total balance of all accounts to be recalculated for the browser
+    // action icon and the main UI.
+    // </summary>
+    refreshBalance: function()
+    {
+        var total = 0;
+        for (var i in this.Accounts)
+            total += this.Accounts[i].getBalance();
+        chrome.browserAction.setBadgeBackgroundColor({ color: [0, 127, 0, 255] });
+        if (total >= 0     && total < 10)     chrome.browserAction.setBadgeText({ text: total.toFixed(2) });
+        if (total >= 10    && total < 100)    chrome.browserAction.setBadgeText({ text: total.toFixed(1) });
+        if (total >= 100   && total < 1000)   chrome.browserAction.setBadgeText({ text: total.toFixed(0) });
+        if (total >= 1000  && total < 10000)  chrome.browserAction.setBadgeText({ text: (total / 1000).toFixed(1) + "k" });
+        if (total >= 10000)                   chrome.browserAction.setBadgeText({ text: (total / 1000).toFixed(0) + "k" });
+    }
     
 });

@@ -85,10 +85,11 @@ Collate.Global.Dashboard = Class.create(Collate.Global, {
         uki('#' + this.uiid + '-BorderBox').dom().style.borderRadius = '15px';
         
         // Update the status information.
-        if (Collate.Backend.Accounts.length == 0)
+        var n = 0; for (var i in Collate.Backend.Accounts) n += 1;
+        if (n == 0)
             uki('#' + this.uiid + '-Status').text("You don't appear to have any accounts set up.  To get started with Collate, click the \"New Account\" button at the top of the page.");
         else
-            uki('#' + this.uiid + '-Status').text("You have " + Collate.Backend.Accounts.length + " accounts set up.");
+            uki('#' + this.uiid + '-Status').text("You have " + n + " accounts set up.");
     }
     
 });

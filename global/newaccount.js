@@ -17,6 +17,32 @@ Collate.Global.NewAccount = Class.create(Collate.Global, {
     {
     },
     
+    // <summary>
+    // Requests a list of toolbar items to show at the top of the screen while
+    // this account is in the active window.
+    // </summary>
+    getToolbar: function()
+    {
+        // Return the relevant toolbar items for the dashboard.
+        return [
+                {
+                    text: "New Account",
+                    width: 121,
+                    target: Backend.Pages["NewAccount"],
+                    page: null
+                },
+                {
+                    text: "Edit Accounts",
+                    width: 122,
+                    target: Backend.Pages["EditAccount"],
+                    page: null
+                }
+            ];
+    },
+    
+    // <summary>
+    // Sets up the UI for the parameters.
+    // </summary>
     setupParameters: function(parameters)
     {
         // Set up the parameters required.
@@ -39,6 +65,9 @@ Collate.Global.NewAccount = Class.create(Collate.Global, {
         uki(views).attachTo(uki('#' + this.uiid + '-Options').dom(), '580 280');
     },
     
+    // <summary>
+    // Creates an account with the specified type, name and parameters.
+    // </summary>
     createAccount: function(acc, name, parameters)
     {
         // Add the account details to local storage.
