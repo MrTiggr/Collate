@@ -71,7 +71,7 @@ Collate.Account.RPC = Class.create(Collate.Account, {
                     jsonrpc: 1.0,
                     id: 1,
                     method: "listtransactions",
-                    params: []
+                    params: [ "*", 1000 ]
                 },
                 { // RPC_STATE_LISTACCOUNTS
                     jsonrpc: 1.0,
