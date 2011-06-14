@@ -11,6 +11,8 @@
 
 const RPC_STATE_GETINFO = 0;
 const RPC_STATE_LISTTRANSACTIONS = 1;
+const RPC_STATE_LISTACCOUNTS = 2;
+const RPC_STATE_GETADDRESSESBYACCOUNT = 3;
 
 Collate.Account.RPC = Class.create(Collate.Account, {
 
@@ -41,6 +43,8 @@ Collate.Account.RPC = Class.create(Collate.Account, {
         this.cachedInfo = null;
         this.cachedBalance = null;
         this.cachedTransactions = null;
+        this.cachedAccounts = null;
+        this.cachedAddresses = null;
         this.miningChanging = false;
     },
     
@@ -68,6 +72,18 @@ Collate.Account.RPC = Class.create(Collate.Account, {
                     id: 1,
                     method: "listtransactions",
                     params: []
+                },
+                { // RPC_STATE_LISTACCOUNTS
+                    jsonrpc: 1.0,
+                    id: 1,
+                    method: "listaccounts",
+                    params: []
+                },
+                { // RPC_STATE_GETADDRESSESBYACCOUNT
+                    jsonrpc: 1.0,
+                    id: 1,
+                    method: "getaddressesbyaccount",
+                    params: []
                 } ]
             };
         
@@ -78,7 +94,7 @@ Collate.Account.RPC = Class.create(Collate.Account, {
         // Call the callback with the xhr set to null; this will indicate that
         // we're just going to start a request rather than handling an existing
         // one.
-        this.onRequest(null, RPC_STATE_LISTTRANSACTIONS);
+        this.onRequest(null, RPC_STATE_LISTTRANSACTIONS, 0);
         return true;
     },
     
@@ -95,7 +111,7 @@ Collate.Account.RPC = Class.create(Collate.Account, {
     // <summary>
     // Callback function for handling the XMLHttpRequest events.
     // </summary>
-    onRequest: function($super, xhr, state)
+    onRequest: function($super, xhr, state, substate)
     {
         // See if we have disconnected and don't need to do anything.
         if (!this.connected)
@@ -145,13 +161,44 @@ Collate.Account.RPC = Class.create(Collate.Account, {
                     this.updateSidebar();
                     
                     break;
+                case RPC_STATE_LISTACCOUNTS:
+                    this.cachedAccounts = [];
+                    var accounts = JSON.parse(xhr.responseText)["result"];
+                    for (var i in accounts)
+                        this.cachedAccounts[this.cachedAccounts.length] = i;
+                    
+                    break;
+                case RPC_STATE_GETADDRESSESBYACCOUNT:
+                    this.cachedAddresses = JSON.parse(xhr.responseText)["result"];
+                    
+                    break;
             }
         }
         
-        // Increment the state.
-        state += 1;
-        if (state == this.state.request.length)
-            state = 0;
+        // Store the old state for later checks.
+        var oldState = state;
+        
+        // Detect what we should increment.
+        if (state == RPC_STATE_GETADDRESSESBYACCOUNT && substate < this.cachedAccounts.length)
+        {
+            // Increment the substate.
+            substate += 1;
+        }
+        else
+        {
+            // Increment the state.
+            state += 1;
+            if (state == this.state.request.length)
+                state = 0;
+        }
+        
+        // Detect if we're going to get all of the addresses, in which case we
+        // need to use the substate.
+        if (state == RPC_STATE_GETADDRESSESBYACCOUNT && oldState != RPC_STATE_GETADDRESSESBYACCOUNT)
+        {
+            this.cachedAddresses = [];
+            substate = 0;
+        }
         
         // (Re)start a new XMLHttpRequest.
         var call = new XMLHttpRequest();
@@ -164,7 +211,14 @@ Collate.Account.RPC = Class.create(Collate.Account, {
         };
         window.setTimeout(function ()
         {
-            call.send(JSON.stringify(me.state.request[state]));
+            if (state == RPC_STATE_GETADDRESSESBYACCOUNT)
+            {
+                // We need to do some special handling here.
+                me.state.request[state].params[0] = me.cachedAccounts[substate];
+                call.send(JSON.stringify(me.state.request[state]));
+            }
+            else
+                call.send(JSON.stringify(me.state.request[state]));
         }, 500);
     },
     
@@ -323,11 +377,11 @@ Collate.Account.RPC = Class.create(Collate.Account, {
                     { view: 'Box', rect: '0 0 1000 1000', anchors: 'top left right width', childViews: [
                 
                         { view: 'Label', rect: '208 70 600 0', anchors: 'top', text: this.name, style: { fontSize: '20px' } },
-                        { view: 'Label', rect: '208 70 580 0', anchors: 'top', id: this.uiid + '-Dashboard-Balance', html: '&#x0E3F _.__', style: { fontSize: '20px', textAlign: 'right' } },
+                        { view: 'Label', rect: '208 70 580 0', anchors: 'top', id: this.uiid + '-Dashboard-Balance', textSelectable: true, html: '&#x0E3F _.__', style: { fontSize: '20px', textAlign: 'right' } },
                 
                         // Main area
                         { view: 'Box', rect: '200 100 600 300', anchors: 'top', id: this.uiid + '-Dashboard-BorderBox', childViews: [
-                            { view: 'Label', rect: '10 10 580 280', anchors: 'left top', id: this.uiid + '-Dashboard-Status', multiline: true,  text: 'Loading information...' },
+                            { view: 'Label', rect: '10 10 580 280', anchors: 'left top', id: this.uiid + '-Dashboard-Status', textSelectable: true, multiline: true,  text: 'Loading information...' },
                         ] }
                         
                     ] }
@@ -368,11 +422,11 @@ Collate.Account.RPC = Class.create(Collate.Account, {
                     { view: 'Box', rect: '0 0 1000 1000', anchors: 'top left right width', childViews: [
                 
                         { view: 'Label', rect: '208 70 600 0', anchors: 'top', text: this.name + " (Mining)", style: { fontSize: '20px' } },
-                        { view: 'Label', rect: '208 70 580 0', anchors: 'top', id: this.uiid + '-Mining-HashRate', html: '_ Mhashes/sec', style: { fontSize: '20px', textAlign: 'right' } },
+                        { view: 'Label', rect: '208 70 580 0', anchors: 'top', id: this.uiid + '-Mining-HashRate', textSelectable: true, html: '_ Mhashes/sec', style: { fontSize: '20px', textAlign: 'right' } },
                 
                         // Main area
                         { view: 'Box', rect: '200 100 600 300', anchors: 'top', id: this.uiid + '-Mining-BorderBox', childViews: [
-                            { view: 'Label', rect: '10 10 580 280', anchors: 'left top', id: this.uiid + '-Mining-Status', multiline: true,  text: 'Loading information...' },
+                            { view: 'Label', rect: '10 10 580 280', anchors: 'left top', id: this.uiid + '-Mining-Status', textSelectable: true, multiline: true,  text: 'Loading information...' },
                             { view: 'Button', rect: '490 265 100 24', anchors: 'bottom right', id: this.uiid + '-Mining-Toggle', text: '...' },
                         ] }
                         
@@ -404,12 +458,12 @@ Collate.Account.RPC = Class.create(Collate.Account, {
                     { view: 'Box', rect: '0 0 1000 1000', anchors: 'top left right width', childViews: [
                 
                         { view: 'Label', rect: '208 70 600 0', anchors: 'top', text: this.name + " (Send Coins)", style: { fontSize: '20px' } },
-                        { view: 'Label', rect: '208 70 580 0', anchors: 'top', id: this.uiid + '-Sending-Balance', html: '&#x0E3F _.__', style: { fontSize: '20px', textAlign: 'right' } },
+                        { view: 'Label', rect: '208 70 580 0', anchors: 'top', id: this.uiid + '-Sending-Balance', textSelectable: true, html: '&#x0E3F _.__', style: { fontSize: '20px', textAlign: 'right' } },
                 
                         // Main area
                         { view: 'Box', rect: '200 100 600 300', anchors: 'top', id: this.uiid + '-Sending-BorderBox', childViews: [
-                            { view: 'Label', rect: '10 10 580 280', anchors: 'left top', id: this.uiid + '-Sending-Status', multiline: true, text: "You are about to send BitCoins to another person.  There is no reversing this operation; ensure that all of the information is correct before hitting 'Send Coins'." },
-                            { view: 'Label', rect: '10 67 580 280', anchors: 'left top', id: this.uiid + '-Sending-Warning', multiline: true, html: "<strong style='color: orange;'>WARNING:</strong> The BitCoin server may automatically add a fee of &#x0E3F 0.01 or higher to the transaction." },
+                            { view: 'Label', rect: '10 10 580 280', anchors: 'left top', id: this.uiid + '-Sending-Status', textSelectable: true, multiline: true, text: "You are about to send BitCoins to another person.  There is no reversing this operation; ensure that all of the information is correct before hitting 'Send Coins'." },
+                            { view: 'Label', rect: '10 67 580 280', anchors: 'left top', id: this.uiid + '-Sending-Warning', textSelectable: true, multiline: true, html: "<strong style='color: orange;'>WARNING:</strong> The BitCoin server may automatically add a fee of &#x0E3F 0.01 or higher to the transaction." },
                             { view: 'Label', rect: '10 110 100 22', anchors: 'left top', text: "Address:" },
                             { view: 'TextField', rect: '110 110 300 22', anchors: 'left top', id: this.uiid + '-Sending-Address', placeholder: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' },
                             { view: 'Label', rect: '10 140 100 22', anchors: 'left top', html: "Amount in &#x0E3F:" },
@@ -494,6 +548,23 @@ Collate.Account.RPC = Class.create(Collate.Account, {
             var text = "Version: " + verString[0] + "." + verString[1] + verString[2] + "<br/>";
             text += "Blocks: " + this.cachedInfo["blocks"] + "<br/>";
             text += "Connections: " + this.cachedInfo["connections"] + "<br/>";
+            if (this.cachedInfo["testnet"])
+            {
+                text += "</br>";
+                text += "<strong style='color: orange;'>NOTICE:</strong> This server is running on the <a href='https://en.bitcoin.it/wiki/Testnet'>test network</a>.</br>";
+            }
+            text += "<br/>";
+            text += "<span style='font-size: 14px; font-weight: bold;'>Addresses</span><br/>";
+            if (this.cachedAddresses == null)
+                text += "Loading a list of addresses...";
+            else
+            {
+                text += "Your BitCoin server accepts transactions that are sent to any of the following addresses:<br/>";
+                text += "<ul>";
+                for (var i = 0; i < this.cachedAddresses.length; i += 1)
+                    text += "<li>" + this.cachedAddresses[i] + "</li>";
+                text += "</ul>";
+            }
             uki('#' + this.uiid + '-Dashboard-Status').html(text);
             uki('#' + this.uiid + '-Dashboard-Balance').html("&#x0E3F " + this.cachedInfo["balance"].toFixed(2));
         }

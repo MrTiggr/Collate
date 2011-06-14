@@ -203,11 +203,11 @@ Collate.Account.OzCoin = Class.create(Collate.Account, {
                     { view: 'Box', rect: '0 0 1000 1000', anchors: 'top left right width', childViews: [
                 
                         { view: 'Label', rect: '208 70 600 0', anchors: 'top', text: this.name, style: { fontSize: '20px' } },
-                        { view: 'Label', rect: '208 70 580 0', anchors: 'top', id: this.uiid + '-Mining-HashRate', html: '_ Mhashes/sec', style: { fontSize: '20px', textAlign: 'right' } },
+                        { view: 'Label', rect: '208 70 580 0', anchors: 'top', id: this.uiid + '-Mining-HashRate', textSelectable: true, html: '_ Mhashes/sec', style: { fontSize: '20px', textAlign: 'right' } },
                 
                         // Main area
                         { view: 'Box', rect: '200 100 600 300', anchors: 'top', id: this.uiid + '-Mining-BorderBox', childViews: [
-                            { view: 'Label', rect: '10 10 580 280', anchors: 'left top', id: this.uiid + '-Mining-Status', multiline: true,  text: 'Loading information...' }
+                            { view: 'Label', rect: '10 10 580 280', anchors: 'left top', id: this.uiid + '-Mining-Status', textSelectable: true, multiline: true,  text: 'Loading information...' }
                         ] }
                         
                     ] }
