@@ -163,6 +163,9 @@ Collate.Frontend = Class.create({
     refreshSidebar: function()
     {
         uki("#TreeView-IndividualWallets").data(this.Backend.getSidebarSection("Individual Wallets"));
+        
+        // Fire the onFrontendLoad event.
+        this.Backend.onFrontendLoad();
     },
     
     // <summary>
@@ -225,6 +228,8 @@ Collate.Frontend = Class.create({
         {
             if (value == null)
                 v.status = "";
+            else if (value == "ERROR")
+                v.status = "<div class='treeList-unread' style='display: block; background:#900; color:#F99;'>" + value + "</div>";
             else
                 v.status = "<div class='treeList-unread' style='display: block;'>" + value + "</div>";
         }

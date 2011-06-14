@@ -24,12 +24,18 @@ Collate.Account.RPC = Class.create(Collate.Account, {
     {
         this.name = name;
         this.uiid = null;
+        
+        // It is important for the Edit Accounts page that:
+        // a) The key names in this variable match those in parameters (i.e. if it's parameters["name"], it must also be parameters["name"]).
+        // b) It contains a key name for every parameter (i.e. if parameters["something"] exists, so must settings["something"]).
+        // Otherwise users won't be able to edit this account properly.
         this.settings = {
             host: parameters.host || "localhost",
             port: parameters.port || "8332",
             username: parameters.username || "user",
             password: parameters.password || "pass"
             };
+        
         this.connected = false;
         this.state = null;
         this.cachedInfo = null;

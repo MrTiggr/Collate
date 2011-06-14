@@ -20,9 +20,11 @@ Collate.Account.OzCoin = Class.create(Collate.Account, {
     {
         this.name = name;
         this.uiid = null;
-        this.settings = {
-            apiKey: parameters.apiKey
-            };
+        
+        // It is okay to copy the parameters array like this; see rpc.js for
+        // a full explaination to the importance of "this.settings".
+        this.settings = parameters;
+        
         this.connected = false;
         this.state = null;
         this.cachedInfo = null;
@@ -126,6 +128,14 @@ Collate.Account.OzCoin = Class.create(Collate.Account, {
     // </summary>
     updateSidebar: function()
     {
+        // Check to see if we should show "Error" in the sidebar.
+        if (this.cachedInfo != null && this.cachedInfo["hashrate"] == null)
+        {
+            Backend.getFrontend().setPageStatus(this, null, "ERROR");
+            Backend.getFrontend().setPageStatus(this, "Mining (Generation)", null);
+            return;
+        }
+        
         // Set the balance in the sidebar.
         if (this.cachedInfo == null || parseFloat(this.cachedInfo["hashrate"]) == 0)
             Backend.getFrontend().setPageStatus(this, null, null);
@@ -231,6 +241,14 @@ Collate.Account.OzCoin = Class.create(Collate.Account, {
         
         if (this.cachedInfo != null)
         {
+            if (this.cachedInfo["hashrate"] == null)
+            {
+                // Invalid API key.
+                uki('#' + this.uiid + '-Mining-HashRate').html("");
+                uki('#' + this.uiid + '-Mining-Status').html("The API key you specified is not valid.  You can edit this account by clicking on the main dashboard and selecting 'Edit Accounts'.");
+                return;
+            }
+            
             var text = "You are currently contributing " + parseFloat(this.cachedInfo["hashrate"]).toFixed(2) + " Mh/s to the pool.<br/>";
             text += "<br/>";
             text += "You have currently earnt &#x0E3F " + parseFloat(this.cachedInfo["confirmed_rewards"]).toFixed(2) + " through mining with OzCoin.  You can withdraw coins via the <a href='http://ozco.in/'>OzCoin website</a>.<br/>";

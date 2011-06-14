@@ -24,20 +24,31 @@ Collate.Global.NewAccount = Class.create(Collate.Global, {
     getToolbar: function()
     {
         // Return the relevant toolbar items for the dashboard.
-        return [
-                {
-                    text: "New Account",
-                    width: 121,
-                    target: Backend.Pages["NewAccount"],
-                    page: null
-                },
-                {
-                    text: "Edit Accounts",
-                    width: 122,
-                    target: Backend.Pages["EditAccount"],
-                    page: null
-                }
-            ];
+        var n = 0; for (var i in Collate.Backend.Accounts) n += 1;
+        if (n > 0)
+            return [
+                    {
+                        text: "New Account",
+                        width: 121,
+                        target: Backend.Pages["NewAccount"],
+                        page: null
+                    },
+                    {
+                        text: "Edit Accounts",
+                        width: 122,
+                        target: Backend.Pages["EditAccounts"],
+                        page: null
+                    }
+                ];
+        else
+            return [
+                    {
+                        text: "New Account",
+                        width: 121,
+                        target: Backend.Pages["NewAccount"],
+                        page: null
+                    }
+                ];
     },
     
     // <summary>
@@ -90,6 +101,13 @@ Collate.Global.NewAccount = Class.create(Collate.Global, {
         
         // Regenerate the account sidebar.
         Backend.getFrontend().refreshSidebar();
+        uki('#' + this.uiid + '-AccountType').trigger('change');
+        uki('#' + this.uiid + '-AccountName').value("");
+        uki('#' + this.uiid + '-Create').text("Created!");
+        window.setTimeout(function()
+        {
+            uki('#' + this.uiid + '-Create').text("Create");
+        }, 500);
     },
     
     // <summary>

@@ -39,6 +39,7 @@ Collate.Backend = Class.create({
         // Initalize the global pages.
         this.Pages["Dashboard"] = new Collate.Global.Dashboard();
         this.Pages["NewAccount"] = new Collate.Global.NewAccount();
+        this.Pages["EditAccounts"] = new Collate.Global.EditAccounts();
         
         // Start the account management system.
         this.AccountManager = new Collate.Backend.AccountManager(this);
