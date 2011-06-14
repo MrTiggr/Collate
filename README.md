@@ -14,7 +14,7 @@ If you want to keep an unpackaged version of Collate (so that you can have a ble
 * Extract the ZIP to a folder.
 * Click Google Chrome's Wrench icon -> Tools -> Extensions.
 * Open Developer Mode (link is at the top right of the pack).
-* Click "Load Unpacked Extension".
+* Click "Load Unpacked Extension". 
 * Point it to the folder which contains the manifest.json file (depending on your ZIP program, there it may be in a subfolder of the extracted location).
 
 Screenshots
