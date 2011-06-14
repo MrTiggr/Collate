@@ -34,6 +34,16 @@ Collate.Frontend = Class.create({
     },
     
     // <summary>
+    // Fires events on the backend that require the window.Frontend variable
+    // set in order to operate properly (such as onFrontendLoad).
+    // </summary>
+    signal: function()
+    {
+        // Fire the onFrontendLoad event.
+        this.Backend.onFrontendLoad();
+    },
+    
+    // <summary>
     // Constructs the page UI.
     // </summary>
     constructUI: function()
@@ -144,7 +154,7 @@ Collate.Frontend = Class.create({
         if (uki('#TreeView-IndividualWallets').selectedRow() == null) return;
         var data = uki('#TreeView-IndividualWallets').selectedRow().data;
         this.clearUI();
-        this.loadUI(data.account, data.value, data.page);
+        this.loadUI(data.account, data.account.name, data.page);
     },
     
     // <summary>
@@ -192,11 +202,14 @@ Collate.Frontend = Class.create({
             var v = searchIn[i];
             
             // Check the object itself.
-            if (v.data.account == account && v.data.page == page)
-                return v.data;
-            
-            if (v.children != null)
-                return this.getPageReference(v.children, account, page);
+            if (v.data.account == account)
+            {
+                if (v.data.page == page)
+                    return v.data;
+                
+                if (v.children != null)
+                    return this.getPageReference(v.children, account, page);
+            }
         }
         
         return null;
@@ -305,11 +318,16 @@ Collate.Frontend = Class.create({
             var me = this;
             button[0].data = data[i];
             button.text(data[i].text);
-            button.bind('click', function()
+            if (data[i].onClick == null)
             {
-                me.clearUI();
-                me.loadUI(this.data.target, this.data.text, this.data.page);
-            });
+                button.bind('click', function()
+                {
+                    me.clearUI();
+                    me.loadUI(this.data.target, this.data.text, this.data.page);
+                });
+            }
+            else
+                button.bind('click', data[i].onClick);
             
             x += 130;
         }

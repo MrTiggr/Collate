@@ -50,6 +50,18 @@ Collate.Backend = Class.create({
     },
     
     // <summary>
+    // This function is called by the frontend once it has finished initalizing; it
+    // is used to signal to the accounts that they should update their sidebar status.
+    // </summary>
+    onFrontendLoad: function()
+    {
+        // We want to request that all of the accounts set
+        // their sidebar statuses.
+        for (var i in this.Accounts)
+            this.Accounts[i].onFrontendLoad();
+    },
+    
+    // <summary>
     // Gets a UI element by ID.  This function is mapped to the uki global when the
     // UI is available, otherwise uki is false.  This allows constructs
     // such as:
@@ -111,6 +123,7 @@ Collate.Backend = Class.create({
     // </summary>
     onTabRemoved: function(tabId, removeInfo)
     {
+        if (this.Tab == null) return;
         if (tabId == this.Tab.id)
         {
             this.Tab = null;
@@ -164,6 +177,7 @@ Collate.Backend = Class.create({
         var total = 0;
         for (var i in this.Accounts)
             total += this.Accounts[i].getBalance();
+        total = Math.round(total * 100000000) / 100000000; // Fix rounding errors.
         chrome.browserAction.setBadgeBackgroundColor({ color: [0, 127, 0, 255] });
         if (total >= 0     && total < 10)     chrome.browserAction.setBadgeText({ text: total.toFixed(2) });
         if (total >= 10    && total < 100)    chrome.browserAction.setBadgeText({ text: total.toFixed(1) });

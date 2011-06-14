@@ -45,6 +45,9 @@ Collate.Global.NewAccount = Class.create(Collate.Global, {
     // </summary>
     setupParameters: function(parameters)
     {
+        // Clear existing options.
+        uki('#' + this.uiid + '-Options').dom().innerHTML = "";
+        
         // Set up the parameters required.
         var y = -24 * parameters.length;
         var views = [];
@@ -134,7 +137,7 @@ Collate.Global.NewAccount = Class.create(Collate.Global, {
         uki('#' + this.uiid + '-BorderBox').dom().style.borderRadius = '15px';
         uki('#' + this.uiid + '-BorderLine1').dom().style.border = 'none';
         uki('#' + this.uiid + '-BorderLine1').dom().style.borderTop = 'solid 1px #CCC';
-        uki('#' + this.uiid + '-AccountType').bind('click', function ()
+        uki('#' + this.uiid + '-AccountType').bind('change', function ()
         {
             var value = uki('#' + this.uiid + '-AccountType').value();
             uki('#' + this.uiid + '-AccountDesc').html(value.Description);

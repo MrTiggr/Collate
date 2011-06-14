@@ -77,6 +77,16 @@ Collate.Account.RPC = Class.create(Collate.Account, {
     },
     
     // <summary>
+    // Callback for when the frontend has loaded and is ready to accept
+    // requests to set statuses on the sidebar.  
+    // </summary>
+    onFrontendLoad: function()
+    {
+        // Update the sidebar.
+        this.updateSidebar();
+    },
+    
+    // <summary>
     // Callback function for handling the XMLHttpRequest events.
     // </summary>
     onRequest: function($super, xhr, state)
@@ -125,17 +135,8 @@ Collate.Account.RPC = Class.create(Collate.Account, {
                     // Generate sending coins dashboard.
                     this.generateSendCoinsDashboard();
                     
-                    // Set the balance in the sidebar.
-                    if (this.cachedInfo == null)
-                        Backend.getFrontend().setPageStatus(this, null, null);
-                    else
-                        Backend.getFrontend().setPageStatus(this, null, "&#x0E3F " + this.cachedInfo["balance"].toFixed(2));
-                    
-                    // Set the mining information in the sidebar.
-                    if (this.cachedInfo == null || !this.cachedInfo["generate"])
-                        Backend.getFrontend().setPageStatus(this, "Mining (Generation)", null);
-                    else
-                        Backend.getFrontend().setPageStatus(this, "Mining (Generation)", (this.cachedInfo["hashespersec"] / 1024 / 1024).toFixed(2) + " Mh/s");
+                    // Update the sidebar.
+                    this.updateSidebar();
                     
                     break;
             }
@@ -247,6 +248,24 @@ Collate.Account.RPC = Class.create(Collate.Account, {
         this.cachedBalance = null;
         this.cachedTransactions = null;
         return true;
+    },
+    
+    // <summary>
+    // Update all the sidebar statistics.
+    // </summary>
+    updateSidebar: function()
+    {
+        // Set the balance in the sidebar.
+        if (this.cachedInfo == null)
+            Backend.getFrontend().setPageStatus(this, null, null);
+        else
+            Backend.getFrontend().setPageStatus(this, null, "&#x0E3F " + this.cachedInfo["balance"].toFixed(2));
+        
+        // Set the mining information in the sidebar.
+        if (this.cachedInfo == null || !this.cachedInfo["generate"])
+            Backend.getFrontend().setPageStatus(this, "Mining (Generation)", null);
+        else
+            Backend.getFrontend().setPageStatus(this, "Mining (Generation)", (this.cachedInfo["hashespersec"] / 1024 / 1024).toFixed(2) + " Mh/s");
     },
     
     // <summary>
@@ -426,17 +445,8 @@ Collate.Account.RPC = Class.create(Collate.Account, {
                 return null;
         }
         
-        // Set the balance in the sidebar.
-        if (this.cachedInfo == null)
-            Backend.getFrontend().setPageStatus(this, null, null);
-        else
-            Backend.getFrontend().setPageStatus(this, null, "&#x0E3F " + this.cachedInfo["balance"].toFixed(2));
-        
-        // Set the mining information in the sidebar.
-        if (this.cachedInfo == null || !this.cachedInfo["generate"])
-            Backend.getFrontend().setPageStatus(this, "Mining (Generation)", null);
-        else
-            Backend.getFrontend().setPageStatus(this, "Mining (Generation)", (this.cachedInfo["hashespersec"] / 1024 / 1024).toFixed(2) + " Mh/s");
+        // Update the sidebar.
+        this.updateSidebar();
     },
     
     formatDate: function($super, date)

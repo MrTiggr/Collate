@@ -34,6 +34,15 @@ Collate.Account = Class.create({
     },
     
     // <summary>
+    // Callback for when the frontend has loaded and is ready to accept
+    // requests to set statuses on the sidebar.  
+    // </summary>
+    onFrontendLoad: function()
+    {
+        // Nothing to do.
+    },
+    
+    // <summary>
     // Disconnects from the appropriate service.  This should not
     // throw away the connection information, but rather be ready
     // to connect again at whim.
