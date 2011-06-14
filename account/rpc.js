@@ -46,6 +46,7 @@ Collate.Account.RPC = Class.create(Collate.Account, {
         this.cachedAccounts = null;
         this.cachedAddresses = null;
         this.miningChanging = false;
+        this.hasError = false;
     },
     
     // <summary>
@@ -120,59 +121,72 @@ Collate.Account.RPC = Class.create(Collate.Account, {
         // Handle the XMLHttpRequest if there is one.
         if (xhr != null && xhr.responseText != "")
         {
-            switch (state)
+            this.hasError = false;
+            if (xhr.status != 200)
             {
-                case RPC_STATE_LISTTRANSACTIONS:
-                    this.cachedTransactions = JSON.parse(xhr.responseText)["result"].reverse();
-                    this.cachedBalance = 0;
-                    for (var i = 0; i < this.cachedTransactions.length; i += 1)
-                    {
-                        if (this.cachedTransactions[i]["fee"] == null)
-                            this.cachedBalance += this.cachedTransactions[i]["amount"];
-                        else
-                            this.cachedBalance += this.cachedTransactions[i]["amount"] + this.cachedTransactions[i]["fee"];
-                    }
-                    
-                    // Cause the backend to refresh the total balance.
-                    Backend.refreshBalance();
-                    
-                    // Skip the next part if we can't update the UI.
-                    if (!uki) break;
-                    
-                    // Generate list of transactions.
-                    this.generateTransactionList();
-                    break;
-                case RPC_STATE_GETINFO:
-                    this.cachedInfo = JSON.parse(xhr.responseText)["result"];
-                    
-                    // Skip the next part if we can't update the UI.
-                    if (!uki) break;
-                    
-                    // Generate wallet dashboard.
-                    this.generateWalletDashboard();
-                    
-                    // Generate mining dashboard.
-                    this.generateMiningDashboard();
-                    
-                    // Generate sending coins dashboard.
-                    this.generateSendCoinsDashboard();
-                    
-                    // Update the sidebar.
-                    this.updateSidebar();
-                    
-                    break;
-                case RPC_STATE_LISTACCOUNTS:
-                    this.cachedAccounts = [];
-                    var accounts = JSON.parse(xhr.responseText)["result"];
-                    for (var i in accounts)
-                        if (accounts[i] >= 0)
-                            this.cachedAccounts[this.cachedAccounts.length] = i;
-                    
-                    break;
-                case RPC_STATE_GETADDRESSESBYACCOUNT:
-                    this.cachedAddresses = this.cachedAddresses.concat(JSON.parse(xhr.responseText)["result"]);
-                    
-                    break;
+                // Some kind of error.
+                this.hasError = true;
+                if (uki) this.updateSidebar();
+            }
+            else
+            {
+                switch (state)
+                {
+                    case RPC_STATE_LISTTRANSACTIONS:
+                        this.cachedTransactions = JSON.parse(xhr.responseText)["result"].reverse();
+                        this.cachedBalance = 0;
+                        for (var i = 0; i < this.cachedTransactions.length; i += 1)
+                        {
+                            if (this.cachedTransactions[i]["fee"] == null)
+                                this.cachedBalance += this.cachedTransactions[i]["amount"];
+                            else
+                                this.cachedBalance += this.cachedTransactions[i]["amount"] + this.cachedTransactions[i]["fee"];
+                        }
+                        
+                        // Cause the backend to refresh the total balance.
+                        Backend.refreshBalance();
+                        
+                        // Skip the next part if we can't update the UI.
+                        if (!uki) break;
+                        
+                        // Update the sidebar.
+                        this.updateSidebar();
+                        
+                        // Generate list of transactions.
+                        this.generateTransactionList();
+                        break;
+                    case RPC_STATE_GETINFO:
+                        this.cachedInfo = JSON.parse(xhr.responseText)["result"];
+                        
+                        // Skip the next part if we can't update the UI.
+                        if (!uki) break;
+                        
+                        // Generate wallet dashboard.
+                        this.generateWalletDashboard();
+                        
+                        // Generate mining dashboard.
+                        this.generateMiningDashboard();
+                        
+                        // Generate sending coins dashboard.
+                        this.generateSendCoinsDashboard();
+                        
+                        // Update the sidebar.
+                        this.updateSidebar();
+                        
+                        break;
+                    case RPC_STATE_LISTACCOUNTS:
+                        this.cachedAccounts = [];
+                        var accounts = JSON.parse(xhr.responseText)["result"];
+                        for (var i in accounts)
+                            if (accounts[i] >= 0)
+                                this.cachedAccounts[this.cachedAccounts.length] = i;
+                        
+                        break;
+                    case RPC_STATE_GETADDRESSESBYACCOUNT:
+                        this.cachedAddresses = this.cachedAddresses.concat(JSON.parse(xhr.responseText)["result"]);
+                        
+                        break;
+                }
             }
         }
         
@@ -180,7 +194,7 @@ Collate.Account.RPC = Class.create(Collate.Account, {
         var oldState = state;
         
         // Detect what we should increment.
-        if (state == RPC_STATE_GETADDRESSESBYACCOUNT && substate < this.cachedAccounts.length - 1)
+        if (this.cachedAccounts != null && state == RPC_STATE_GETADDRESSESBYACCOUNT && substate < this.cachedAccounts.length - 1)
         {
             // Increment the substate.
             substate += 1;
@@ -316,6 +330,14 @@ Collate.Account.RPC = Class.create(Collate.Account, {
     // </summary>
     updateSidebar: function()
     {
+        // Check to see if we should show "Error" in the sidebar.
+        if (this.hasError)
+        {
+            Backend.getFrontend().setPageStatus(this, null, "ERROR");
+            Backend.getFrontend().setPageStatus(this, "Mining (Generation)", null);
+            return;
+        }
+        
         // Set the balance in the sidebar.
         if (this.cachedInfo == null)
             Backend.getFrontend().setPageStatus(this, null, null);
@@ -465,9 +487,9 @@ Collate.Account.RPC = Class.create(Collate.Account, {
                         { view: 'Box', rect: '200 100 600 300', anchors: 'top', id: this.uiid + '-Sending-BorderBox', childViews: [
                             { view: 'Label', rect: '10 10 580 280', anchors: 'left top', id: this.uiid + '-Sending-Status', textSelectable: true, multiline: true, text: "You are about to send BitCoins to another person.  There is no reversing this operation; ensure that all of the information is correct before hitting 'Send Coins'." },
                             { view: 'Label', rect: '10 67 580 280', anchors: 'left top', id: this.uiid + '-Sending-Warning', textSelectable: true, multiline: true, html: "<strong style='color: orange;'>WARNING:</strong> The BitCoin server may automatically add a fee of &#x0E3F 0.01 or higher to the transaction." },
-                            { view: 'Label', rect: '10 110 100 22', anchors: 'left top', text: "Address:" },
+                            { view: 'Label', rect: '10 110 100 22', anchors: 'left top', id: this.uiid + '-Sending-Address-Label', text: "Address:" },
                             { view: 'TextField', rect: '110 110 300 22', anchors: 'left top', id: this.uiid + '-Sending-Address', placeholder: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' },
-                            { view: 'Label', rect: '10 140 100 22', anchors: 'left top', html: "Amount in &#x0E3F:" },
+                            { view: 'Label', rect: '10 140 100 22', anchors: 'left top', id: this.uiid + '-Sending-Amount-Label', html: "Amount in &#x0E3F:" },
                             { view: 'TextField', rect: '110 140 80 22', anchors: 'left top', id: this.uiid + '-Sending-Amount', placeholder: '0.00' },
                             { view: 'Label', rect: '10 265 100 24', anchors: 'left top', id: this.uiid + '-Sending-Progress', text: "The transaction is now in progress..." },
                             { view: 'Button', rect: '490 265 100 24', anchors: 'bottom right', id: this.uiid + '-Sending-Confirm', text: 'Send Coins' },
@@ -543,7 +565,12 @@ Collate.Account.RPC = Class.create(Collate.Account, {
     {
         if (!uki) return;
         
-        if (this.cachedInfo != null)
+        if (this.hasError)
+        {
+            uki('#' + this.uiid + '-Dashboard-Status').text("The RPC connection information you specified was not valid (potentially a wrong username or password).  You can edit this account by clicking on the main dashboard and selecting 'Edit Accounts'.");
+            uki('#' + this.uiid + '-Dashboard-Balance').html("&#x0E3F _.__");
+        }
+        else if (this.cachedInfo != null)
         {
             var verString = "" + this.cachedInfo["version"];
             var text = "Version: " + verString[0] + "." + verString[1] + verString[2] + "<br/>";
@@ -566,6 +593,7 @@ Collate.Account.RPC = Class.create(Collate.Account, {
                     text += "<li>" + this.cachedAddresses[i] + "</li>";
                 text += "</ul>";
             }
+            
             uki('#' + this.uiid + '-Dashboard-Status').html(text);
             uki('#' + this.uiid + '-Dashboard-Balance').html("&#x0E3F " + this.cachedInfo["balance"].toFixed(2));
         }
@@ -609,7 +637,13 @@ Collate.Account.RPC = Class.create(Collate.Account, {
     {
         if (!uki) return;
         
-        if (this.cachedInfo != null)
+        if (this.hasError)
+        {
+            uki('#' + this.uiid + '-Mining-Status').text("The RPC connection information you specified was not valid (potentially a wrong username or password).  You can edit this account by clicking on the main dashboard and selecting 'Edit Accounts'.");
+            uki('#' + this.uiid + '-Mining-HashRate').html("&#x0E3F _.__");
+            uki('#' + this.uiid + '-Mining-Toggle').visible(false);
+        }
+        else if (this.cachedInfo != null)
         {
             var text = null;
             if (this.cachedInfo["generate"])
@@ -655,6 +689,26 @@ Collate.Account.RPC = Class.create(Collate.Account, {
     {
         if (!uki) return;
         
+        if (this.hasError)
+        {
+            uki('#' + this.uiid + '-Sending-Status').text("The RPC connection information you specified was not valid (potentially a wrong username or password).  You can edit this account by clicking on the main dashboard and selecting 'Edit Accounts'.");
+            uki('#' + this.uiid + '-Sending-Balance').html("&#x0E3F _.__");
+            uki('#' + this.uiid + '-Sending-Warning').visible(false);
+            uki('#' + this.uiid + '-Sending-Address-Label').visible(false);
+            uki('#' + this.uiid + '-Sending-Address').visible(false);
+            uki('#' + this.uiid + '-Sending-Amount-Label').visible(false);
+            uki('#' + this.uiid + '-Sending-Amount').visible(false);
+            uki('#' + this.uiid + '-Sending-Confirm').visible(false);
+            return;
+        }
+        
+        uki('#' + this.uiid + '-Sending-Status').text("You are about to send BitCoins to another person.  There is no reversing this operation; ensure that all of the information is correct before hitting 'Send Coins'.");
+        uki('#' + this.uiid + '-Sending-Warning').visible(true);
+        uki('#' + this.uiid + '-Sending-Address-Label').visible(true);
+        uki('#' + this.uiid + '-Sending-Address').visible(true);
+        uki('#' + this.uiid + '-Sending-Amount-Label').visible(true);
+        uki('#' + this.uiid + '-Sending-Amount').visible(true);
+        uki('#' + this.uiid + '-Sending-Confirm').visible(true);
         if (this.cachedInfo != null)
         {
             uki('#' + this.uiid + '-Sending-Balance').html("&#x0E3F " + this.cachedInfo["balance"].toFixed(2));
