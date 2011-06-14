@@ -165,11 +165,12 @@ Collate.Account.RPC = Class.create(Collate.Account, {
                     this.cachedAccounts = [];
                     var accounts = JSON.parse(xhr.responseText)["result"];
                     for (var i in accounts)
-                        this.cachedAccounts[this.cachedAccounts.length] = i;
+                        if (accounts[i] >= 0)
+                            this.cachedAccounts[this.cachedAccounts.length] = i;
                     
                     break;
                 case RPC_STATE_GETADDRESSESBYACCOUNT:
-                    this.cachedAddresses = JSON.parse(xhr.responseText)["result"];
+                    this.cachedAddresses = this.cachedAddresses.concat(JSON.parse(xhr.responseText)["result"]);
                     
                     break;
             }
@@ -179,7 +180,7 @@ Collate.Account.RPC = Class.create(Collate.Account, {
         var oldState = state;
         
         // Detect what we should increment.
-        if (state == RPC_STATE_GETADDRESSESBYACCOUNT && substate < this.cachedAccounts.length)
+        if (state == RPC_STATE_GETADDRESSESBYACCOUNT && substate < this.cachedAccounts.length - 1)
         {
             // Increment the substate.
             substate += 1;
@@ -207,7 +208,7 @@ Collate.Account.RPC = Class.create(Collate.Account, {
         call.onreadystatechange = function() 
         {
             if (call.readyState == 4)
-                me.onRequest(call, state);
+                me.onRequest(call, state, substate);
         };
         window.setTimeout(function ()
         {
