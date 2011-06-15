@@ -119,14 +119,27 @@ Collate.Account.RPC = Class.create(Collate.Account, {
             return;
         
         // Handle the XMLHttpRequest if there is one.
-        if (xhr != null && xhr.responseText != "")
+        if (xhr != null)
         {
             this.hasError = false;
-            if (xhr.status != 200)
+            if (xhr.status != 200 || xhr.responseText == "" || JSON.parse(xhr.responseText)["error"] != null)
             {
                 // Some kind of error.
                 this.hasError = true;
-                if (uki) this.updateSidebar();
+                if (uki)
+                {
+                    // Update the sidebar.
+                    this.updateSidebar();
+                            
+                    // Generate wallet dashboard.
+                    this.generateWalletDashboard();
+                    
+                    // Generate mining dashboard.
+                    this.generateMiningDashboard();
+                    
+                    // Generate sending coins dashboard.
+                    this.generateSendCoinsDashboard();
+                }
             }
             else
             {
@@ -203,6 +216,8 @@ Collate.Account.RPC = Class.create(Collate.Account, {
         {
             // Increment the state.
             state += 1;
+            if (this.cachedAccounts == null && state == RPC_STATE_GETADDRESSESBYACCOUNT)
+                state += 1; // Skip this request if we don't have the required data for it.
             if (state == this.state.request.length)
                 state = 0;
         }
@@ -567,7 +582,13 @@ Collate.Account.RPC = Class.create(Collate.Account, {
         
         if (this.hasError)
         {
-            uki('#' + this.uiid + '-Dashboard-Status').text("The RPC connection information you specified was not valid (potentially a wrong username or password).  You can edit this account by clicking on the main dashboard and selecting 'Edit Accounts'.");
+            uki('#' + this.uiid + '-Dashboard-Status').html("The plugin was unable to connect to the BitCoin server.  Here are some steps to try:" +
+            "<ul style='margin-right: 15px;'>" + 
+            "<li>Ensure the username, password and port settings are correct.  You can edit this account by clicking on the main dashboard and selecting 'Edit Accounts'.</li>" + 
+            "<li>Ensure that the BitCoin software is running in server mode (either by running bitcoind or with the -server / -daemon option).</li>" + 
+            "<li>Ensure that your firewall is not blocking the connection.</li>" + 
+            "<li>Ensure that any port forwarding has been set up on the destination address if required.</li>" + 
+            "</ul>");
             uki('#' + this.uiid + '-Dashboard-Balance').html("&#x0E3F _.__");
         }
         else if (this.cachedInfo != null)
@@ -639,7 +660,13 @@ Collate.Account.RPC = Class.create(Collate.Account, {
         
         if (this.hasError)
         {
-            uki('#' + this.uiid + '-Mining-Status').text("The RPC connection information you specified was not valid (potentially a wrong username or password).  You can edit this account by clicking on the main dashboard and selecting 'Edit Accounts'.");
+            uki('#' + this.uiid + '-Mining-Status').html("The plugin was unable to connect to the BitCoin server.  Here are some steps to try:" +
+            "<ul>" + 
+            "<li>Ensure the username, password and port settings are correct.  You can edit this account by clicking on the main dashboard and selecting 'Edit Accounts'.</li>" + 
+            "<li>Ensure that the BitCoin software is running in server mode (either by running bitcoind or with the -server / -daemon option).</li>" + 
+            "<li>Ensure that your firewall is not blocking the connection.</li>" + 
+            "<li>Ensure that any port forwarding has been set up on the destination address if required.</li>" + 
+            "</ul>");
             uki('#' + this.uiid + '-Mining-HashRate').html("&#x0E3F _.__");
             uki('#' + this.uiid + '-Mining-Toggle').visible(false);
         }
@@ -691,7 +718,13 @@ Collate.Account.RPC = Class.create(Collate.Account, {
         
         if (this.hasError)
         {
-            uki('#' + this.uiid + '-Sending-Status').text("The RPC connection information you specified was not valid (potentially a wrong username or password).  You can edit this account by clicking on the main dashboard and selecting 'Edit Accounts'.");
+            uki('#' + this.uiid + '-Sending-Status').html("The plugin was unable to connect to the BitCoin server.  Here are some steps to try:" +
+            "<ul>" + 
+            "<li>Ensure the username, password and port settings are correct.  You can edit this account by clicking on the main dashboard and selecting 'Edit Accounts'.</li>" + 
+            "<li>Ensure that the BitCoin software is running in server mode (either by running bitcoind or with the -server / -daemon option).</li>" + 
+            "<li>Ensure that your firewall is not blocking the connection.</li>" + 
+            "<li>Ensure that any port forwarding has been set up on the destination address if required.</li>" + 
+            "</ul>");
             uki('#' + this.uiid + '-Sending-Balance').html("&#x0E3F _.__");
             uki('#' + this.uiid + '-Sending-Warning').visible(false);
             uki('#' + this.uiid + '-Sending-Address-Label').visible(false);
