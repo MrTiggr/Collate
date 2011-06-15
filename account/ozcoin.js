@@ -87,6 +87,9 @@ Collate.Account.OzCoin = Class.create(Collate.Account, {
                 
                 // Update the sidebar.
                 this.updateSidebar();
+                
+                // Cause the backend to refresh the total balance.
+                Backend.refreshBalance();
             }
         }
         
