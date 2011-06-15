@@ -4,7 +4,7 @@ _A Bitcoin wallet, trading and mining management tool.  Runs in your Google Chro
 
 Installation - The Easy Way
 ---------------------
-Download the extension from https://github.com/downloads/hach-que/Collate/0.1-prerelease.crx or by using the Downloads button above.
+Download the extension from https://github.com/hach-que/Collate/downloads or by using the Downloads button above.
 
 Installation - The Hard Way
 ---------------------
