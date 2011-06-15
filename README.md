@@ -2,20 +2,11 @@ Collate
 ====================
 _A Bitcoin wallet, trading and mining management tool.  Runs in your Google Chrome web browser._
 
-Installation - The Easy Way
+Installation
 ---------------------
-Download the extension from https://github.com/hach-que/Collate/downloads or by using the Downloads button above.
+If you just want to run Collate, you can [install it from the Chrome Web Store](https://chrome.google.com/webstore/detail/anlcpclkmbeeoglfgbfboogijdkbohkn).  Installing via the Chrome Web Store also means you will receive automatic updates.
 
-Installation - The Hard Way
----------------------
-If you want to keep an unpackaged version of Collate (so that you can have a bleeding edge version by just typing 'git pull'):
-
-* Download the ZIP from the "Downloads" link.
-* Extract the ZIP to a folder.
-* Click Google Chrome's Wrench icon -> Tools -> Extensions.
-* Open Developer Mode (link is at the top right of the pack).
-* Click "Load Unpacked Extension". 
-* Point it to the folder which contains the manifest.json file (depending on your ZIP program, there it may be in a subfolder of the extracted location).
+If you are interested in plugin development or advanced installation, see the wiki page on [writing a plugin](https://github.com/hach-que/Collate/wiki/Writing-a-Plugin).
 
 Screenshots
 ---------------------
