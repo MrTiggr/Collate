@@ -2,6 +2,7 @@
   "name": "Collate",
   "version": "0.1.0.10615",
   "description": "A unified BitCoin management system.",
+  "homepage_url": "http://www.github.com/hach-que/Collate",
   "icons": { "128": "icon128.png" },
   "background_page": "bg.html",
   "permissions": ["tabs", "http://*/", "https://*/"],
