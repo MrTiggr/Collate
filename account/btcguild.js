@@ -21,9 +21,7 @@ Collate.Account.BTCGuild = Class.create(Collate.Account, {
     {
         this.name = name;
         this.uiid = null;
-        
-        // It is okay to copy the parameters array like this; see rpc.js for
-        // a full explaination to the importance of "this.settings".
+
         this.settings = parameters;
         
         this.connected = false;
@@ -37,22 +35,15 @@ Collate.Account.BTCGuild = Class.create(Collate.Account, {
     // </summary>
     connect: function($super)
     {
-        // Check to see if we are already connected.
         if (this.connected)
             return true;
         
-        // Construct the URL.
         this.state = {
             url:"https://www.btcguild.com/api.php?api_key=" + this.settings.apiKey
             };
         
-        // We are now connected (the onRequest won't fire correctly unless
-        // we set this to true first).
         this.connected = true;
-        
-        // Call the callback with the xhr set to null; this will indicate that
-        // we're just going to start a request rather than handling an existing
-        // one.
+
         this.onRequest(null);
         return true;
     },
@@ -61,61 +52,48 @@ Collate.Account.BTCGuild = Class.create(Collate.Account, {
     // Callback for when the frontend has loaded and is ready to accept
     // requests to set statuses on the sidebar.  
     // </summary>
-    onFrontendLoad: function()
-    {
-        // Update the sidebar.
+    onFrontendLoad: function() {
         this.updateSidebar();
     },
     
     // <summary>
     // Callback function for handling the XMLHttpRequest events.
     // </summary>
-    onRequest: function($super, xhr)
-    {
-        // See if we have disconnected and don't need to do anything.
+    onRequest: function($super, xhr) {
         if (!this.connected)
             return;
         
-        // Handle the XMLHttpRequest if there is one.
-        if (xhr != null && xhr.responseText != "")
-        {
+        if (xhr != null && xhr.responseText != "") {
             this.cachedInfo = JSON.parse(xhr.responseText);
-            
-            // Make sure we reset the total hashrate...
             this.totalHashRate = 0.00;
             for (worker in this.cachedInfo["workers"]) {
                 this.totalHashRate = this.totalHashRate + this.cachedInfo["workers"][worker]["hash_rate"];
             }
 
-            // Only access the UI if it actually exists.
-            if (uki)
-            {
-                // Generate dashboard.
-                this.generateDashboard();
+            if (uki) {
+                this.generateWorkerDashboard();
                 
-                // Update the sidebar.
+                this.generateRewardDashboard();
+
+                this.generateBTCGuildInfoDashboard();
+
                 this.updateSidebar();
                 
-                // Cause the backend to refresh the total balance.
                 Backend.refreshBalance();
             }
         }
-        
-        // (Re)start a new XMLHttpRequest.
+
         var call = new XMLHttpRequest();
         var me = this;
         call.open("GET", this.state.url);
-        call.onreadystatechange = function() 
-        {
+        call.onreadystatechange = function() {
             if (call.readyState == 4)
                 me.onRequest(call);
         };
-        if (this.cachedInfo == null)
+        if (this.cachedInfo == null) {
             call.send();
-        else
-        {
-            window.setTimeout(function ()
-            {
+        } else {
+            window.setTimeout(function () {
                 call.send();
             }, 1000 * 60 /* check every minute */);
         }
@@ -127,8 +105,7 @@ Collate.Account.BTCGuild = Class.create(Collate.Account, {
     // throw away the connection information, but rather be ready
     // to connect again at whim.
     // </summary>
-    disconnect: function($super)
-    {
+    disconnect: function($super) {
         this.connected = false;
         this.state = null;
         this.cachedInfo = null;
@@ -138,44 +115,36 @@ Collate.Account.BTCGuild = Class.create(Collate.Account, {
     // <summary>
     // Update all the sidebar statistics.
     // </summary>
-    updateSidebar: function()
-    {
-        // Check to see if we should show "Error" in the sidebar.
-        if (this.cachedInfo != null && this.cachedInfo["user"] == null)
-        {
+    updateSidebar: function() {
+        if (this.cachedInfo == null) {
             Backend.getFrontend().setPageStatus(this, null, "ERROR");
-            Backend.getFrontend().setPageStatus(this, "Mining (Generation)", null);
+            Backend.getFrontend().setPageStatus(this, "Worker status", null);
             return;
         }
         
-        // Set the balance in the sidebar.
         if (this.cachedInfo == null || parseFloat(this.totalHashRate) == 0)
             Backend.getFrontend().setPageStatus(this, null, null);
         else
-            Backend.getFrontend().setPageStatus(this, null, "&#x0E3F " + this.cachedInfo["user"]["confirmed_rewards"]);
+            Backend.getFrontend().setPageStatus(this, null, "&#x0E3F " + parseFloat(this.cachedInfo["user"]["confirmed_rewards"]).toFixed(4));
         
-        // Set mining information in the sidebar.
         if (this.cachedInfo == null || parseFloat(this.totalHashRate) == 0)
-            Backend.getFrontend().setPageStatus(this, "Mining (Generation)", null);
+            Backend.getFrontend().setPageStatus(this, "Worker status", null);
         else if (parseFloat(this.totalHashRate) >= 1000)
-            Backend.getFrontend().setPageStatus(this, "Mining (Generation)", (parseFloat(this.totalHashRate) / 1000).toFixed(2) + " Gh/s");
+            Backend.getFrontend().setPageStatus(this, "Worker status", (parseFloat(this.totalHashRate) / 1000).toFixed(2) + " Gh/s");
         else
-            Backend.getFrontend().setPageStatus(this, "Mining (Generation)", parseFloat(this.totalHashRate).toFixed(2) + " Mh/s");
+            Backend.getFrontend().setPageStatus(this, "Worker status", parseFloat(this.totalHashRate).toFixed(2) + " Mh/s");
     },
     
     // <summary>
     // Requests a list of toolbar items to show at the top of the screen while
     // this account is in the active window.
     // </summary>
-    getToolbar: function()
-    {
-        // Return the relevant toolbar items for the dashboard.
+    getToolbar: function() {
         return [
                 {
                     text: "Visit BTCGuild",
                     width: 100,
-                    onClick: function()
-                    {
+                    onClick: function() {
                         window.open("https://btcguild.com/");
                     }
                 }
@@ -187,10 +156,8 @@ Collate.Account.BTCGuild = Class.create(Collate.Account, {
     // if the top-level item will be used.  In the later case, null
     // will be passed to getUI instead of one of the strings in the array.
     // </summary>
-    getMenu: function()
-    {
-        // Return menu items.
-        return ["Mining (Generation)"];
+    getMenu: function() {
+        return ["Worker status", "BTCGuild Stats and Info", "Your Rewards"];
     },
     
     // <summary>
@@ -200,106 +167,167 @@ Collate.Account.BTCGuild = Class.create(Collate.Account, {
     // </summary>
     // <param name="attach">Call this function with the generated UKI before modifying elements.</param>
     // <param name="page">One of the menu items, or null.</param>
-    getUI: function(attach, uiid, page)
-    {
+    getUI: function(attach, uiid, page)  {
         if (!this.connected)
             this.connect();
         this.uiid = uiid;
         
-        switch (page)
-        {
+        switch (page)  {
             case null:
-            case "Mining (Generation)":
-                // Create the status dashboard.
+            case "Worker status":
+                attach(uki(
+                    { view: 'Table', rect: '0 0 1000 1000', anchors: 'top left right width', id: this.uiid + '-WorkerStatus', style: {fontSize: '12px', lineHeight: '14px'}, columns: [
+                        { view: 'table.NumberColumn', label: 'ID', width: 40, sort: 'ASC' },
+                        { view: 'table.Column', label: 'Worker Name', resizable: true, minWidth: 150, width: 220 },
+                        { view: 'table.Column', label: 'Hash Rate', resizable: true, width: 150 },
+                        { view: 'table.NumberColumn', label: 'Round Shares', resizable: true, width: 70 },
+                        { view: 'table.NumberColumn', label: 'Round Stales', resizable: true, width: 70 },
+                        { view: 'table.NumberColumn', label: 'Total Shares', resizable: true, width: 70 },
+                        { view: 'table.NumberColumn', label: 'Total Stales', resizable: true, width: 70 },
+                        { view: 'table.NumberColumn', label: 'Last Share', resizable: true, width: 70 },
+                        { view: 'table.NumberColumn', label: 'Blocks found', resizable: true, width: 70 }
+                    ] }
+                ));
+                this.generateWorkerDashboard();
+                break;
+            
+            case "Your Rewards":
                 attach(uki(
                     { view: 'Box', rect: '0 0 1000 1000', anchors: 'top left right width', childViews: [
                 
-                        { view: 'Label', rect: '208 70 600 0', anchors: 'top', text: this.name, style: { fontSize: '20px' } },
-                        { view: 'Label', rect: '208 70 580 0', anchors: 'top', id: this.uiid + '-Mining-HashRate', textSelectable: true, html: '_ Mhashes/sec', style: { fontSize: '20px', textAlign: 'right' } },
-                
-                        // Main area
-                        { view: 'Box', rect: '200 100 600 300', anchors: 'top', id: this.uiid + '-Mining-BorderBox', childViews: [
-                            { view: 'Label', rect: '10 10 580 280', anchors: 'left top', id: this.uiid + '-Mining-Status', textSelectable: true, multiline: true,  text: 'Loading information...' }
+                        { view: 'Label', rect: '208 70 600 0', anchors: 'top', text: this.name, style: { fontSize: '20px' } },                
+                        { view: 'Box', rect: '200 100 600 300', anchors: 'top', id: this.uiid + '-Rewards-BorderBox', childViews: [
+                            { view: 'Label', rect: '10 10 580 280', anchors: 'left top', id: this.uiid + '-Rewards-Info', textSelectable: true, multiline: true,  text: 'Loading information...' }
                         ] }
                         
                     ] }
                 ));
                 
-                // Now modify and attach events to the elements.
                 var me = this;
-                uki('#' + this.uiid + '-Mining-BorderBox').dom().style.border = 'solid 1px #CCC';
-                uki('#' + this.uiid + '-Mining-BorderBox').dom().style.borderRadius = '15px';
-                uki('#' + this.uiid + '-Mining-Status').dom().style.lineHeight = '20px';
+                uki('#' + this.uiid + '-Rewards-BorderBox').dom().style.border = 'solid 1px #CCC';
+                uki('#' + this.uiid + '-Rewards-BorderBox').dom().style.borderRadius = '15px';
+                uki('#' + this.uiid + '-Rewards-Info').dom().style.lineHeight = '20px';
                 
-                // Generate dashboard.
-                this.generateDashboard();
+                this.generateRewardDashboard();
+                break;
+
+            case "BTCGuild Stats and Info":
+                attach(uki(
+                    { view: 'Box', rect: '0 0 1000 1000', anchors: 'top left right width', childViews: [
                 
+                        { view: 'Label', rect: '208 70 600 0', anchors: 'top', text: this.name, style: { fontSize: '20px' } },                
+                        { view: 'Box', rect: '200 100 600 300', anchors: 'top', id: this.uiid + '-BTCGuildStats-BorderBox', childViews: [
+                            { view: 'Label', rect: '10 10 580 280', anchors: 'left top', id: this.uiid + '-BTCGuildStats-Info', textSelectable: true, multiline: true,  text: 'Loading information...' }
+                        ] }
+                        
+                    ] }
+                ));
+                
+                var me = this;
+                uki('#' + this.uiid + '-BTCGuildStats-BorderBox').dom().style.border = 'solid 1px #CCC';
+                uki('#' + this.uiid + '-BTCGuildStats-BorderBox').dom().style.borderRadius = '15px';
+                uki('#' + this.uiid + '-BTCGuildStats-Info').dom().style.lineHeight = '20px';
+                
+                this.generateBTCGuildInfoDashboard();
                 break;
                
             default:
                 return null;
         }
         
-        // Update the sidebar.
         this.updateSidebar();
     },
     
     // <summary>
     // Regenerates the information for the dashboard.
     // </summary>
-    generateDashboard: function($super)
+    generateRewardDashboard: function($super)
     {
         if (!uki) return;
         
-        if (this.cachedInfo != null)
-        {
-            if (this.cachedInfo["user"] == null)
-            {
-                // Invalid API key.
-                uki('#' + this.uiid + '-Mining-HashRate').html("");
-                uki('#' + this.uiid + '-Mining-Status').html("The API key you specified is not valid.  You can edit this account by clicking on the main dashboard and selecting 'Edit Accounts'.");                return;
+        if (this.cachedInfo != null) {
+            if (this.cachedInfo["user"]["unconfirmed_rewards"] == null) {
+                uki('#' + this.uiid + '-Rewards-Info').html("The API key you specified is not valid.  You can edit this account by clicking on the main dashboard and selecting 'Edit Accounts'.");                return;
                 return;
             }
 
-            var text = "You are currently contributing " + this.convertHash(this.totalHashRate) + " to the pool.<br/>";
-            text += "<hr /><strong>Your rewards</strong>";
+            var text = "<strong>Your rewards</strong>";
             text += "<br />Total previous payouts: &#x0E3F " + this.cachedInfo["user"]["payouts"];
             text += "<br />Confirmed rewards: &#x0E3F " + this.cachedInfo["user"]["confirmed_rewards"];
             text += "<br />Unconfirmed rewards: &#x0E3F " + this.cachedInfo["user"]["unconfirmed_rewards"];
             text += "<br />Estimated rewards: &#x0E3F " + this.cachedInfo["user"]["estimated_rewards"];
 
-            text += "<hr /><strong>BTCGuild Info</strong>:";
-            text += "<br />Total hashrate: " + this.convertHash(this.cachedInfo["pool"]["hash_rate"]);
-            text += "<br />Total active workers: " + this.cachedInfo["pool"]["active_workers"];
-            text += "<br />Round time: " + this.cachedInfo["pool"]["round_time"];
-
-            text += "<hr />The above statistics are updated every 10 minutes.";
-            uki('#' + this.uiid + '-Mining-HashRate').html(this.convertHash(this.totalHashRate));
-            uki('#' + this.uiid + '-Mining-Status').html(text);
-        }
-        else
-        {
-            uki('#' + this.uiid + '-Mining-Status').text("Loading information...");
-            uki('#' + this.uiid + '-Mining-HashRate').html("_ Mhashes/sec");
-            uki('#' + this.uiid + '-Mining-Toggle').text('...');
+            uki('#' + this.uiid + '-Rewards-Info').html(text);
+        } else {
+            uki('#' + this.uiid + '-Rewards-Info').text("Loading information...");
         }
     },
     
     // <summary>
     // Returns the current balance of the account.
     // </summary>
-    getBalance: function($super)
-    {
-        // If this returns null, it means there's no value yet.
+    getBalance: function($super) {
         if (this.cachedInfo == null) return null;
         return this.cachedInfo["confirmed_rewards"];
     },
 
     // <summary>
+    // Returns the a whole heap of information about BTCGuild.
+    // </summary>
+    generateBTCGuildInfoDashboard: function($super) {
+        if (!uki) return;
+        
+        if (this.cachedInfo != null) {
+            if (this.cachedInfo["user"]["unconfirmed_rewards"] == null) {
+                // Invalid API key.
+                uki('#' + this.uiid + '-BTCGuildStats-Info').html("The API key you specified is not valid.  You can edit this account by clicking on the main dashboard and selecting 'Edit Accounts'.");                return;
+                return;
+            }
+            var text = "<strong>Basic BTCGuild Stats and Information</strong>:";
+            text += "<br />Total Hash Rate: " + this.convertHash(this.cachedInfo["pool"]["hash_rate"]);
+            text += "<br />US West: " + this.convertHash(this.cachedInfo["pool"]["uswest_speed"]);
+            text += "<br />US East: " + this.convertHash(this.cachedInfo["pool"]["useast_speed"]);
+            text += "<br />US Central: " + this.convertHash(this.cachedInfo["pool"]["uscentral_speed"]);
+            text += "<br />Nederlands: " + this.convertHash(this.cachedInfo["pool"]["nl_speed"]);
+            text += "<br />United Kingdom: " + this.convertHash(this.cachedInfo["pool"]["uk_speed"]);
+
+            text += "<hr />Active Workers: " + this.cachedInfo["pool"]["hash_rate"];
+            text += "<br />Round Time: " + this.cachedInfo["pool"]["round_time"];
+            text += "<br />Round Shares: " + this.cachedInfo["pool"]["round_shares"];
+
+            uki('#' + this.uiid + '-BTCGuildStats-Info').html(text);
+        } else {
+            uki('#' + this.uiid + '-BTCGuildStats-Info').text("Loading information...");
+        }
+    },
+    
+     // <summary>
+    // Purdy little table with your worker info.
+    // </summary>   
+    generateWorkerDashboard: function($super) {
+        if (!uki) return;
+
+        var table = uki('#' + this.uiid + '-WorkerStatus');
+        if (table == null || this.cachedInfo["workers"] == null) return;
+        var opts = [];
+        for (worker in this.cachedInfo["workers"]) {
+            opts[opts.length] = [ worker,
+                this.cachedInfo["workers"][worker]["worker_name"],
+                this.convertHash(this.cachedInfo["workers"][worker]["hash_rate"]), 
+                this.cachedInfo["workers"][worker]["round_shares"],
+                this.cachedInfo["workers"][worker]["round_stales"],
+                this.cachedInfo["workers"][worker]["total_shares"],
+                this.cachedInfo["workers"][worker]["total_stales"],
+                this.cachedInfo["workers"][worker]["last_share"],
+                this.cachedInfo["workers"][worker]["blocks_found"] ];
+        }
+        table.data(opts);
+    },
+    
+    // <summary>
     // Returns a nicer (formated) hash including the suffix MHash or GHash
     // </summary>
-    convertHash: function($super,hash_rate)
-    {
+    convertHash: function($super,hash_rate) {
         decimalPlace = 2;
 
         if (hash_rate >= 1000) {
@@ -325,5 +353,5 @@ Collate.Account.BTCGuild.Description = "<i>0% Fee Bitcoin Mining Pool.</i><br />
 // The account parameter list.
 // </summary>
 Collate.Account.BTCGuild.Parameters = [
-    { type: 'Text', name: 'apiKey', text: 'API Key', default: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' }
+    { type: 'Text', name: 'apiKey', text: 'API Key', default: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' }
 ];
