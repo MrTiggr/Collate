@@ -120,14 +120,79 @@ Collate.Account.Explorer = Class.create(Collate.Account, {
                         for (var i = 0; i < a["out"].length; i += 1)
                             bT += parseFloat(a["out"][i]["value"]);
                         
-                        // Create a transaction log for this sending operation
-                        // and subtract the amount from the cached balance.
-                        this.cachedBalance -= bT;
-                        this.cachedTransactions[this.cachedTransactions.length] = {
-                            time: a["time"],
-                            description: a["in"][0]["address"],
-                            debit: bT.toFixed(2),
-                            credit: null
+                        // Check to see whether we have the fee information cached,
+                        // or whether we have to go find it.
+                        var fT = Backend.Storage.getRawItem("FeeCache-" + a["in"][0]["prev_out"]["hash"] + "-" + a["hash"]);
+                        if (fT == null)
+                        {
+                            // We need to calculate the fee which involves making
+                            // a request; add an "unknown" transaction amount to
+                            // the transaction list, which we can update later.
+                            this.cachedBalance -= bT;
+                            this.cachedTransactions[this.cachedTransactions.length] = {
+                                time: this.formatDate(a["time"]),
+                                description: a["in"][0]["address"],
+                                debit: "...",
+                                credit: null
+                            }
+                            
+                            // Create the XHR in it's own context so that the values
+                            // b and i don't change as we evaluate the rest of the
+                            // transactions.
+                            var me = this;
+                            var ctx = function(b, i, n, pr, cc)
+                            {
+                                var subcall = new XMLHttpRequest();
+                                subcall.open("GET", "http://blockexplorer.com/rawtx/" + pr, true);
+                                subcall.onreadystatechange = function() 
+                                {
+                                    if (subcall.readyState == 4)
+                                    {
+                                        // Get the fee information.
+                                        var fI = JSON.parse(subcall.responseText);
+                                        
+                                        // Calculate fee.
+                                        var fA = fI["out"][n]["value"] - b;
+                                        
+                                        // Complete the adjustment and update the actual
+                                        // cached transaction information.
+                                        me.cachedBalance -= fA;
+                                        me.cachedTransactions[i]["debit"] = (b + fA).toFixed(2);
+                                        
+                                        // Save the information to the cache.
+                                        Backend.Storage.setRawItem(cc, fA);
+                                        
+                                        // Cause the backend to refresh the total balance.
+                                        Backend.refreshBalance();
+                                        
+                                        // Skip the next part if we can't update the UI.
+                                        if (uki)
+                                        {
+                                            // Update the sidebar.
+                                            me.updateSidebar();
+                                            
+                                            // Generate wallet dashboard.
+                                            me.generateWalletDashboard();
+                                            
+                                            // Generate list of transactions.
+                                            me.generateTransactionList();
+                                        }
+                                    }
+                                };
+                                subcall.send();
+                            };
+                            ctx(bT, this.cachedTransactions.length, a["in"][0]["prev_out"]["n"], a["in"][0]["prev_out"]["hash"], "FeeCache-" + a["in"][0]["prev_out"]["hash"] + "-" + a["hash"]);
+                        }
+                        else
+                        {
+                            // We already know the fee so we can add it right now.
+                            this.cachedBalance -= (bT + fT);
+                            this.cachedTransactions[this.cachedTransactions.length] = {
+                                time: this.formatDate(a["time"]),
+                                description: a["in"][0]["address"],
+                                debit: (bT + fT).toFixed(2),
+                                credit: null
+                            }
                         }
                     }
                     else if (a["in"][0]["address"] == undefined)
@@ -143,7 +208,7 @@ Collate.Account.Explorer = Class.create(Collate.Account, {
                         // and add the amount to the cached balance.
                         this.cachedBalance += bT;
                         this.cachedTransactions[this.cachedTransactions.length] = {
-                            time: a["time"],
+                            time: this.formatDate(a["time"]),
                             description: "Generation",
                             debit: null,
                             credit: bT.toFixed(2)
@@ -162,7 +227,7 @@ Collate.Account.Explorer = Class.create(Collate.Account, {
                         // and add the amount to the cached balance.
                         this.cachedBalance += bT;
                         this.cachedTransactions[this.cachedTransactions.length] = {
-                            time: a["time"],
+                            time: this.formatDate(a["time"]),
                             description: a["in"][0]["address"],
                             debit: null,
                             credit: bT.toFixed(2)
@@ -194,7 +259,7 @@ Collate.Account.Explorer = Class.create(Collate.Account, {
         // (Re)start a new XMLHttpRequest.
         var call = new XMLHttpRequest();
         var me = this;
-        call.open("POST", this.state.url, true);
+        call.open("GET", this.state.url, true);
         call.onreadystatechange = function() 
         {
             if (call.readyState == 4)
@@ -339,6 +404,16 @@ Collate.Account.Explorer = Class.create(Collate.Account, {
     
     formatDate: function($super, date)
     {
+        // Converts the Block Explorer date format into
+        // one that we display on the UI.
+        var day = date.substring(8, 10);
+        var month = date.substring(5, 7);
+        var year = date.substring(0, 4);
+        
+        var hour = date.substring(11, 13);
+        var minute = date.substring(14, 16);
+        var second = date.substring(17, 19);
+        
         // Temporary padding function.
         var padl = function(padString, length, str)
         {
@@ -348,19 +423,17 @@ Collate.Account.Explorer = Class.create(Collate.Account, {
         }
         
         // Work out how to represent hours and other date elements.
-        var d = new Date(date * 1000);
-        var hrs = d.getHours();
         var ampm = "am";
-        if (hrs == 0) { hrs = 12; ampm = "am"; }
-        else if (hrs > 0 && hrs < 12) { hrs += 0; ampm = "am"; }
-        else { hrs -= 12; ampm = "pm"; }
+        if (hour == 0) { hour = 12; ampm = "am"; }
+        else if (hour > 0 && hour < 12) { hour += 0; ampm = "am"; }
+        else { hour -= 12; ampm = "pm"; }
         
         // Return the constructed string.
-        return d.getDate() + "/" +
-               padl("0", 2, d.getMonth()) + "/" +
-               d.getFullYear() + " " +
-               padl(" ", 2, hrs) + ":" +
-               padl("0", 2, d.getMinutes()) + ampm;
+        return day + "/" +
+               month + "/" +
+               year + " " +
+               hour + ":" +
+               minute + ampm;
     },
     
     // <summary>
