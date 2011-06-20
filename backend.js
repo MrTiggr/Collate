@@ -177,7 +177,11 @@ Collate.Backend = Class.create({
     {
         var total = 0;
         for (var i in this.Accounts)
-            total += this.Accounts[i].getBalance();
+        {
+            var t = this.Accounts[i].getBalance();
+            if (t != null)
+                total += t;
+        }
         total = Math.round(total * 100000000) / 100000000; // Fix rounding errors.
         chrome.browserAction.setBadgeBackgroundColor({ color: [0, 127, 0, 255] });
         if (total >= 0     && total < 10)     chrome.browserAction.setBadgeText({ text: total.toFixed(2) });

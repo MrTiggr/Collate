@@ -1,3 +1,3 @@
 if (window.Collate == null) window.Collate = {};
 
-Collate.Version = "0.1";
+Collate.Version = "0.2";

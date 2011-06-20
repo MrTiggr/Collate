@@ -1,6 +1,6 @@
 {
   "name": "Collate",
-  "version": "0.1.10615.0",
+  "version": "0.2.10620.0",
   "description": "A unified BitCoin management system.",
   "icons": { "128": "icon128.png" },
   "background_page": "bg.html",
