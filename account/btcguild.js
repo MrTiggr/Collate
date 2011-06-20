@@ -12,8 +12,7 @@
 Collate.Account.BTCGuild = Class.create(Collate.Account, {
 
     // <summary>
-    // Initializes an RPC-based account, such as a connection to a local or remote
-    // BitCoin server.
+    // Initializes a BTCGuild account.
     // </summary>
     // <param name="name">The name of this account as it appears in Collate.</param>
     // <param name="parameters">The custom settings applicable to this account.</param>
@@ -34,7 +33,7 @@ Collate.Account.BTCGuild = Class.create(Collate.Account, {
     },
     
     // <summary>
-    // Connects to the RPC-based server.
+    // Connects to the BTCGuild sever.
     // </summary>
     connect: function($super)
     {
@@ -194,7 +193,7 @@ Collate.Account.BTCGuild = Class.create(Collate.Account, {
         return [
                 {
                     text: "Visit BTCGuild",
-                    width: 100,
+                    width: 115,
                     onClick: function() {
                         window.open("https://btcguild.com/");
                     }

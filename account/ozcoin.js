@@ -11,8 +11,7 @@
 Collate.Account.OzCoin = Class.create(Collate.Account, {
 
     // <summary>
-    // Initializes an RPC-based account, such as a connection to a local or remote
-    // BitCoin server.
+    // Initializes an OzCoin-based account.
     // </summary>
     // <param name="name">The name of this account as it appears in Collate.</param>
     // <param name="parameters">The custom settings applicable to this account.</param>
@@ -31,7 +30,7 @@ Collate.Account.OzCoin = Class.create(Collate.Account, {
     },
     
     // <summary>
-    // Connects to the RPC-based server.
+    // Connects to the OzCoin website.
     // </summary>
     connect: function($super)
     {
@@ -254,7 +253,7 @@ Collate.Account.OzCoin = Class.create(Collate.Account, {
             
             var text = "You are currently contributing " + parseFloat(this.cachedInfo["hashrate"]).toFixed(2) + " Mh/s to the pool.<br/>";
             text += "<br/>";
-            text += "You have currently earnt &#x0E3F " + parseFloat(this.cachedInfo["confirmed_rewards"]).toFixed(2) + " through mining with OzCoin, excluding payouts.  You can withdraw coins via the <a href='http://ozco.in/'>OzCoin website</a>.<br/>";
+            text += "You have currently earnt &#x0E3F " + parseFloat(this.cachedInfo["confirmed_rewards"]).toFixed(2) + " through mining with OzCoin, excluding payouts.  You can withdraw coins via the <a href='http://ozco.in/' target='_blank'>OzCoin website</a>.<br/>";
             text += "<br/>";
             text += "The above statistics are updated every 10 minutes.";
             uki('#' + this.uiid + '-Mining-HashRate').html(parseFloat(this.cachedInfo["hashrate"]).toFixed(2) + " Mhashes/sec");
@@ -274,7 +273,7 @@ Collate.Account.OzCoin = Class.create(Collate.Account, {
     {
         // If this returns null, it means there's no value yet.
         if (this.cachedInfo == null) return null;
-        return this.cachedInfo["confirmed_rewards"];
+        return parseFloat(this.cachedInfo["confirmed_rewards"]);
     }
     
 });
@@ -287,7 +286,7 @@ Collate.Account.OzCoin.Name = "OzCoin (Mining Pool)";
 // <summary>
 // The account type description (to be shown in the New Account wizard).
 // </summary>
-Collate.Account.OzCoin.Description = "<i>Connects to the OzCoin mining pool and shows information about your account.</i><br/><br/>Retrieves information from the OzCoin servers about your account information, such as the current contributing hashrate and your current earnings.  This plugin does not perform any BitCoin mining of it's own.<br/><br/>Your API key can be found under 'Account Settings' at the <a href='http://ozco.in/'>OzCoin website</a>.";
+Collate.Account.OzCoin.Description = "<i>Connects to the OzCoin mining pool and shows information about your account.</i><br/><br/>Retrieves information from the OzCoin servers about your account information, such as the current contributing hashrate and your current earnings.  This plugin does not perform any BitCoin mining of it's own.<br/><br/>Your API key can be found under 'Account Settings' at the <a href='http://ozco.in/' target='_blank'>OzCoin website</a>.";
 
 // <summary>
 // The account parameter list.

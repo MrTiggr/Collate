@@ -600,7 +600,7 @@ Collate.Account.RPC = Class.create(Collate.Account, {
             if (this.cachedInfo["testnet"])
             {
                 text += "</br>";
-                text += "<strong style='color: orange;'>NOTICE:</strong> This server is running on the <a href='https://en.bitcoin.it/wiki/Testnet'>test network</a>.</br>";
+                text += "<strong style='color: orange;'>NOTICE:</strong> This server is running on the <a href='https://en.bitcoin.it/wiki/Testnet' target='_blank'>test network</a>.</br>";
             }
             text += "<br/>";
             text += "<span style='font-size: 14px; font-weight: bold;'>Addresses</span><br/>";
@@ -766,12 +766,12 @@ Collate.Account.RPC = Class.create(Collate.Account, {
 // <summary>
 // The account type name (to be shown in the New Account wizard).
 // </summary>
-Collate.Account.RPC.Name = "Local Server (RPC)";
+Collate.Account.RPC.Name = "Local Server (Wallet)";
 
 // <summary>
 // The account type description (to be shown in the New Account wizard).
 // </summary>
-Collate.Account.RPC.Description = "<i>Connects to a BitCoin server running on your local machine via RPC.</i><br/><br/>If you are running the BitCoin client on your machine and want to be able to send BitCoins and view transactions from within your browser, this is the account type to select.  Please ensure that you do not have two Local Server Accounts connecting to the same BitCoin client, or the available BitCoin balance will be incorrect.";
+Collate.Account.RPC.Description = "<i>Connects to a BitCoin server running on your local machine via RPC.</i><br/><br/>Uses a connection to the local BitCoin server running on your machine to provide transaction information and the ability to send coins via your browser.<br/><br/><strong style='color:red;'>It is not recommended that you choose this account type as it requires leaving the BitCoin software running and hence leaving your wallet unencrypted.</strong>";
 
 // <summary>
 // The account parameter list.
