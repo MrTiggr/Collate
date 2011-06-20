@@ -268,7 +268,7 @@ Collate.Account.Explorer = Class.create(Collate.Account, {
         window.setTimeout(function ()
         {
             call.send();
-        }, 500);
+        }, 1000 * 60);
     },
     
     // <summary>
