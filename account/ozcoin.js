@@ -79,6 +79,9 @@ Collate.Account.OzCoin = Class.create(Collate.Account, {
         {
             this.cachedInfo = JSON.parse(xhr.responseText);
             
+            // Cause the backend to refresh the total balance.
+            Backend.refreshBalance();
+            
             // Only access the UI if it actually exists.
             if (uki)
             {
@@ -87,9 +90,6 @@ Collate.Account.OzCoin = Class.create(Collate.Account, {
                 
                 // Update the sidebar.
                 this.updateSidebar();
-                
-                // Cause the backend to refresh the total balance.
-                Backend.refreshBalance();
             }
         }
         
@@ -254,7 +254,7 @@ Collate.Account.OzCoin = Class.create(Collate.Account, {
             
             var text = "You are currently contributing " + parseFloat(this.cachedInfo["hashrate"]).toFixed(2) + " Mh/s to the pool.<br/>";
             text += "<br/>";
-            text += "You have currently earnt &#x0E3F " + parseFloat(this.cachedInfo["confirmed_rewards"]).toFixed(2) + " through mining with OzCoin.  You can withdraw coins via the <a href='http://ozco.in/'>OzCoin website</a>.<br/>";
+            text += "You have currently earnt &#x0E3F " + parseFloat(this.cachedInfo["confirmed_rewards"]).toFixed(2) + " through mining with OzCoin, excluding payouts.  You can withdraw coins via the <a href='http://ozco.in/'>OzCoin website</a>.<br/>";
             text += "<br/>";
             text += "The above statistics are updated every 10 minutes.";
             uki('#' + this.uiid + '-Mining-HashRate').html(parseFloat(this.cachedInfo["hashrate"]).toFixed(2) + " Mhashes/sec");
@@ -262,9 +262,8 @@ Collate.Account.OzCoin = Class.create(Collate.Account, {
         }
         else
         {
-            uki('#' + this.uiid + '-Mining-Status').text("Loading information...");
             uki('#' + this.uiid + '-Mining-HashRate').html("_ Mhashes/sec");
-            uki('#' + this.uiid + '-Mining-Toggle').text('...');
+            uki('#' + this.uiid + '-Mining-Status').text("Loading information...");
         }
     },
     
