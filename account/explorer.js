@@ -23,9 +23,10 @@ Collate.Account.Explorer = Class.create(Collate.Account, {
         this.name = name;
         this.uiid = null;
         
-        // It is okay to copy the parameters array like this; see rpc.js for
-        // a full explaination to the importance of "this.settings".
-        this.settings = parameters;
+        // Copy the parameters to the settings variable.
+        this.settings = {
+            address: parameters.address || "1Bxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            };
         
         this.connected = false;
         this.state = null;
@@ -83,7 +84,7 @@ Collate.Account.Explorer = Class.create(Collate.Account, {
         if (xhr != null)
         {
             this.hasError = false;
-            if (xhr.status != 200 || xhr.responseText == "" || JSON.parse(xhr.responseText)["error"] != null)
+            if (xhr.status != 200 || xhr.responseText == "" || xhr.responseText.substring(0, 5) == "ERROR" || JSON.parse(xhr.responseText)["error"] != null)
             {
                 // Some kind of error.
                 this.hasError = true;
@@ -265,10 +266,16 @@ Collate.Account.Explorer = Class.create(Collate.Account, {
             if (call.readyState == 4)
                 me.onRequest(call);
         };
-        window.setTimeout(function ()
-        {
-            call.send();
-        }, 1000 * 60);
+        if (this.cachedInfo == null)
+            window.setTimeout(function ()
+            {
+                call.send();
+            }, 1000);
+        else
+            window.setTimeout(function ()
+            {
+                call.send();
+            }, 1000 * 60);
     },
     
     // <summary>
@@ -445,7 +452,7 @@ Collate.Account.Explorer = Class.create(Collate.Account, {
         
         if (this.hasError)
         {
-            uki('#' + this.uiid + '-Dashboard-Status').html("The plugin was unable to connect to the <a href='http://blockexplorer.com' target='_blank'>Block Explorer</a>.  This usually indicates the website is down for maintainance or could otherwise not be contacted.");
+            uki('#' + this.uiid + '-Dashboard-Status').html("The plugin was unable to connect to the <a href='http://blockexplorer.com' target='_blank'>Block Explorer</a>.  This usually indicates the website is down for maintainance or could otherwise not be contacted.<br/><br/>It's also possible that you provided an invalid BitCoin address when creating the account; you can edit this account by clicking on the main dashboard and selecting 'Edit Accounts'.");
             uki('#' + this.uiid + '-Dashboard-Balance').html("&#x0E3F _.__");
         }
         else if (this.cachedInfo != null)
