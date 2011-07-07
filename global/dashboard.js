@@ -86,7 +86,7 @@ Collate.Global.Dashboard = Class.create(Collate.Global, {
                     { view: 'Label', rect: '10 280 580 20', anchors: 'left top', textSelectable: true, text: 'James Rhodes' },
                     { view: 'Label', rect: '150 280 580 20', anchors: 'left top', textSelectable: true, text: '1BxvwaEueWBqFB9nZUev2JxnJeRSbG5oeh' },
                     { view: 'Label', rect: '10 300 580 20', anchors: 'left top', textSelectable: true, text: 'Rob McFadzean' },
-                    { view: 'Label', rect: '150 300 580 20', anchors: 'left top', textSelectable: true, text: '<unknown>' }
+                    { view: 'Label', rect: '150 300 580 20', anchors: 'left top', textSelectable: true, text: '1BkYxHZTvzamitCYtgRaDChD2TC92NtE6F' }
 
                 ] }
                 

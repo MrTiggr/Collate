@@ -139,7 +139,7 @@ Collate.Account.OzCoin = Class.create(Collate.Account, {
         }
         
         // Set the balance in the sidebar.
-        if (this.cachedInfo == null || parseFloat(this.cachedInfo["hashrate"]) == 0)
+        if (this.cachedInfo == null || parseFloat(this.cachedInfo["confirmed_rewards"]) == 0)
             Backend.getFrontend().setPageStatus(this, null, null);
         else
             Backend.getFrontend().setPageStatus(this, null, "&#x0E3F " + parseFloat(this.cachedInfo["confirmed_rewards"]).toFixed(2));
