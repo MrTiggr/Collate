@@ -563,6 +563,7 @@ Collate.Account.RPC = Class.create(Collate.Account, {
         var ampm = "am";
         if (hrs == 0) { hrs = 12; ampm = "am"; }
         else if (hrs > 0 && hrs < 12) { hrs += 0; ampm = "am"; }
+        else if (hrs == 12) { hrs = 12; ampm = "pm"; }
         else { hrs -= 12; ampm = "pm"; }
         
         // Return the constructed string.
@@ -780,5 +781,5 @@ Collate.Account.RPC.Parameters = [
     { type: 'Text', name: 'host', text: 'Hostname', default: 'localhost' },
     { type: 'Text', name: 'port', text: 'Port', default: '8332' },
     { type: 'Text', name: 'username', text: 'Username', default: 'user' },
-    { type: 'Text', name: 'password', text: 'Password', default: 'pass' },
+    { type: 'Password', name: 'password', text: 'Password', default: 'pass' },
 ];

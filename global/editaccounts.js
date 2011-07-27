@@ -72,6 +72,9 @@ Collate.Global.EditAccounts = Class.create(Collate.Global, {
                 case "Text":
                     views[views.length] = { view: 'TextField', rect: '100 ' + (241 + y) + ' 200 22', anchors: 'left top', id: this.uiid + "-Parameters-" + p.name, placeholder: p.default, value: account.settings[p.name] };
                     break;
+                case "Password":
+                    views[views.length] = { view: 'PasswordTextField', rect: '100 ' + (241 + y) + ' 200 22', anchors: 'left top', id: this.uiid + "-Parameters-" + p.name, placeholder: p.default, value: account.settings[p.name] };
+                    break;
                 default:
                     break;
             }

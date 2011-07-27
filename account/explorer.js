@@ -433,6 +433,7 @@ Collate.Account.Explorer = Class.create(Collate.Account, {
         var ampm = "am";
         if (hour == 0) { hour = 12; ampm = "am"; }
         else if (hour > 0 && hour < 12) { hour += 0; ampm = "am"; }
+        else if (hour == 12) { hour = 12; ampm = "pm"; }
         else { hour -= 12; ampm = "pm"; }
         
         // Return the constructed string.
